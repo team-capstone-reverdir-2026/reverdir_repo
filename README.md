@@ -52,7 +52,6 @@
 ---
 
 ## 👥 Team - Reverdir
-<br>
 
 > - 이은효
 > - 전채연
@@ -61,7 +60,6 @@
 
 ---
 ## 📚 Documentation
-<br>
 
 * 📌 [Team Ground Rule](https://github.com/team-capstone-reverdir-2026/reverdir_repo/blob/main/Team_Ground_Rule.md)
 * 📌 [Team Notion](https://www.notion.so/2026-capstone-fd7d4a4683e182fd9cea81cca11a4b88)
