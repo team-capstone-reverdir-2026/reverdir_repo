@@ -22,8 +22,6 @@
 
 ## 🎯 Target & Problem
 ### 👤 Target User
-<br>
-
 > - 독서를 습관화하고 싶은 사람
 > - 기록을 꾸준히 남기기 어려운 사람
 
