@@ -58,9 +58,12 @@
 
 ## 👥 Team - Reverdir
 
-> - 이은효
-> - 전채연
-> - Lyu Dongying
+> - 이은효: Frontend Developer (UI/UX)
+> - Flutter 기반 UI 구현, 사용자 인터페이스 설계, 디자인 시스템 구축
+> - Lyu Dongying: Frontend Developer (Data/Logic)
+> - 상태관리, API 연동, 실시간 데이터 처리 및 클라이언트 로직 구현
+> - 전채연: Backend Developer
+> - Spring Boot 기반 서버 개발, API 설계, DB 및 인증 시스템 구축
 <br>
 
 ---
