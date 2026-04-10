@@ -58,7 +58,7 @@
 
 * 📌 [Team Ground Rule](https://github.com/team-capstone-reverdir-2026/reverdir_repo/blob/main/Team_Ground_Rule.md)
 * 📌 [Team Notion](https://www.notion.so/2026-capstone-fd7d4a4683e182fd9cea81cca11a4b88)
-* 📌 [Project Plan]([https://www.notion.so/2026-capstone-fd7d4a4683e182fd9cea81cca11a4b88](https://www.notion.so/33ad4a4683e1800a9ecbe0aa9f3f3e86?source=copy_link))
+* 📌 [Project Plan]([https://www.notion.so/2026-capstone-fd7d4a4683e182fd9cea81cca11a4b88](https://www.notion.so/33ad4a4683e1800a9ecbe0aa9f3f3e86?source=copy_link)
 
 <br>
 
