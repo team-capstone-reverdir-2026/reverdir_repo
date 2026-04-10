@@ -51,7 +51,9 @@
 * **🤖 AI 기반 활동 리포트 (Persona Analysis)**
   * 마니또 종료 시, 유저의 활동 데이터를 AI가 종합 분석
   * 개인별 '마니또 캐릭터 유형' 명명 및 방사형 그래프가 포함된 결과 리포트 발급
- 
+
+<br>
+
 ## 📚 Documentation
 
 * 📌 [Team Ground Rule](https://github.com/team-capstone-reverdir-2026/reverdir_repo/blob/main/Team_Ground_Rule.md)
@@ -64,7 +66,7 @@
 ### Backend
 * **Language & Framework:** Java 17, Spring Boot
 * **Database:** PostgreSQL (RDBMS)
-* **API & External Services:** * OpenAI API (AI 마니또 페르소나 분석 및 텍스트 생성)
+* **API & External Services:** OpenAI API (AI 마니또 페르소나 분석 및 텍스트 생성)
   * Firebase Cloud Messaging / FCM (실시간 푸시 알림)
   * Kakao Link API (카카오톡 초대 코드 공유)
 * **Version Control:** Git & GitHub
@@ -89,7 +91,6 @@
 $git clone [https://github.com/Reverdir/Tto-Manito.git$](https://github.com/Reverdir/Tto-Manito.git$) cd Tto-Manito/backend
 
 # 2. application.yml 환경변수 설정
-# (src/main/resources/application.yml 파일에 DB 접속 정보 및 각종 API Key 설정 필요)
 
 # 3. Spring Boot 실행
 $./gradlew build$ ./gradlew bootRun
