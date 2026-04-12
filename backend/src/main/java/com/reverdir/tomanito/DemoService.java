@@ -151,7 +151,7 @@ public class DemoService {
                     .path("content").path("parts").get(0)
                     .path("text").asText();
 
-            // 5. JSON 스트링을 우리가 만든 DTO로 변환
+            
             return objectMapper.readValue(jsonContent, DemoDto.DemoResponse.class);
 
         } catch (Exception e) {
