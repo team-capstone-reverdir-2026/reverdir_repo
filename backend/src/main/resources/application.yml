@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: to-manito
+  mvc:
+    cors:
+      allowed-origins: "*"
+
+google:
+  gemini:
+    api:
+      key: ${GEMINI_API_KEY}
+    model: gemini-2.5-flash

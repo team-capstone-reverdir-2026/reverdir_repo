@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>🍅 또마니또 AI 분석 데모</title>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #FFF5F5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(255, 99, 71, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+        h2 { color: #FF6347; margin-bottom: 5px; }
+        p.subtitle { color: #888; font-size: 14px; margin-bottom: 20px; }
+        textarea {
+            width: 100%; height: 100px;
+            padding: 10px; border: 1px solid #FFCCCB;
+            border-radius: 8px; resize: none; font-size: 15px;
+            box-sizing: border-box;
+            outline-color: #FF6347;
+        }
+        button {
+            background-color: #FF6347; color: white;
+            border: none; padding: 12px 20px;
+            border-radius: 8px; font-weight: bold; font-size: 16px;
+            cursor: pointer; width: 100%; margin-top: 15px;
+            transition: 0.3s;
+        }
+        button:hover { background-color: #E5533D; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* 결과창 디자인 */
+        #result-box {
+            margin-top: 20px; padding: 20px;
+            background-color: #FFF0F0; border-radius: 8px;
+            display: none; /* 처음엔 숨김 */
+        }
+        .persona-title { font-size: 22px; font-weight: bold; color: #D32F2F; margin-bottom: 10px; }
+        .story-text { font-size: 15px; color: #555; line-height: 1.5; }
+        #loading { display: none; color: #FF6347; margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🍅 또마니또 데모</h2>
+    <p class="subtitle">마니띠에게 보낼 비밀 쪽지를 적어보세요!</p>
+
+    <textarea id="noteInput" placeholder="예: 오늘 과제하느라 고생 많았어! 오늘도 화이팅ㅎㅎ"></textarea>
+
+    <button id="analyzeBtn" onclick="sendToAI()">어떤 마니또인지 분석하기 🔍</button>
+
+    <div id="loading">AI가 쪽지를 분석 중입니다... 🐢⏳</div>
+
+    <div id="result-box">
+        <div class="persona-title" id="personaResult">칭호</div>
+        <div class="story-text" id="storyResult">스토리</div>
+    </div>
+</div>
+
+<script>
+    async function sendToAI() {
+        const note = document.getElementById('noteInput').value;
+        const btn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const resultBox = document.getElementById('result-box');
+
+        if(!note.trim()) {
+            alert("쪽지 내용을 입력해주세요!");
+            return;
+        }
+
+        // 로딩 시작
+        btn.disabled = true;
+        loading.style.display = 'block';
+        resultBox.style.display = 'none';
+
+        try {
+            const response = await fetch('http://localhost:8080/api/demo/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: note })
+            });
+
+            const data = await response.json();
+
+            document.getElementById('personaResult').innerText = "✨ " + data.persona + " ✨";
+            document.getElementById('storyResult').innerText = data.story;
+            resultBox.style.display = 'block';
+
+        } catch (error) {
+            alert("서버와 연결할 수 없습니다. 스프링 서버가 켜져 있는지 확인해주세요!");
+        } finally {
+            btn.disabled = false;
+            loading.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
