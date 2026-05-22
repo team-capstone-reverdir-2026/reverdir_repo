@@ -1,0 +1,1379 @@
+openapi: 3.0.3
+info:
+  title: Manitto API
+  description: |
+    마니또 서비스의 REST API 명세서입니다.
+    
+    ## 인증
+    JWT Bearer Token 방식을 사용합니다.
+    로그인 / 회원가입을 제외한 모든 API는 Authorization 헤더가 필요합니다.
+    
+    ```
+    Authorization: Bearer <access_token>
+    ```
+    
+    ## 에러 응답 공통 형식
+    ```json
+    {
+      "code": "ERROR_CODE",
+      "message": "에러 메시지"
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: Manitto Dev Team
+
+servers:
+  - url: https://api.manitto.app/v1
+    description: Production
+  - url: https://dev-api.manitto.app/v1
+    description: Development
+  - url: http://localhost:8080/v1
+    description: Local
+
+tags:
+  - name: Auth
+    description: 인증 (로그인 / 회원가입)
+  - name: Rooms
+    description: 방 생성 / 조회 / 입장
+  - name: Participants
+    description: 방 참여자 관리
+  - name: Missions
+    description: 미션 CRUD 및 랜덤 미션
+  - name: Game
+    description: 게임 시작 / 종료 (방장 전용)
+  - name: DailyQuestions
+    description: 오늘의 질문 및 답변
+  - name: Notes
+    description: 쪽지 보내기 / 쪽지함
+  - name: Results
+    description: 결과 리포트 (마니또 공개 / 유형 분석)
+
+# ─────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────
+paths:
+
+  # ════════════════════════════════════════════
+  # AUTH
+  # ════════════════════════════════════════════
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: 회원가입
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              name: "홍길동"
+              username: "gildong123"
+              password: "pass1234"
+      responses:
+        '201':
+          description: 회원가입 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: 이미 존재하는 아이디
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: DUPLICATE_USERNAME
+                message: "이미 사용 중인 아이디입니다."
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: 로그인
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: "gildong123"
+              password: "pass1234"
+      responses:
+        '200':
+          description: 로그인 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 아이디 또는 비밀번호 불일치
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INVALID_CREDENTIALS
+                message: "아이디 또는 비밀번호가 올바르지 않습니다."
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 액세스 토큰 재발급
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: 토큰 재발급 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ════════════════════════════════════════════
+  # ROOMS
+  # ════════════════════════════════════════════
+  /rooms:
+    get:
+      tags: [Rooms]
+      summary: 내가 참여 중인 방 목록 조회
+      description: 메인 페이지에 표시되는 방 목록. 상태(대기중/진행중/종료) 포함.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 방 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rooms:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoomSummary'
+              example:
+                rooms:
+                  - id: "room_abc123"
+                    name: "우리 팀 마니또"
+                    status: WAITING
+                    participantCount: 5
+                  - id: "room_xyz456"
+                    name: "친구들과 마니또"
+                    status: IN_PROGRESS
+                    participantCount: 8
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Rooms]
+      summary: 방 생성
+      description: |
+        방 생성 시 초대 코드(6자리)가 함께 발급됩니다.
+        방장은 생성 후 자동으로 방 입장 페이지(참여자 정보 입력)로 이동해야 합니다.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+            example:
+              name: "우리 팀 마니또"
+              description: "2024 팀 워크숍 마니또"
+              endsAt: "2024-12-31T23:59:00+09:00"
+              missionCount: 3
+      responses:
+        '201':
+          description: 방 생성 성공. 초대 코드 포함.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRoomResponse'
+              example:
+                roomId: "room_abc123"
+                inviteCode: "A3F9K2"
+                name: "우리 팀 마니또"
+                description: "2024 팀 워크숍 마니또"
+                endsAt: "2024-12-31T23:59:00+09:00"
+                missionCount: 3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /rooms/join:
+    post:
+      tags: [Rooms]
+      summary: 초대 코드로 방 확인
+      description: |
+        초대 코드 6자리 입력 팝업에서 호출.
+        방 존재 여부 및 참여 가능 여부 확인 후 방 입장 페이지로 이동.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inviteCode]
+              properties:
+                inviteCode:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  description: 6자리 초대 코드
+            example:
+              inviteCode: "A3F9K2"
+      responses:
+        '200':
+          description: 유효한 초대 코드. 방 기본 정보 반환.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomJoinPreview'
+              example:
+                roomId: "room_abc123"
+                name: "우리 팀 마니또"
+                description: "2024 팀 워크숍 마니또"
+                missionCount: 3
+                participantCount: 4
+        '404':
+          description: 유효하지 않은 초대 코드
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INVALID_INVITE_CODE
+                message: "유효하지 않은 초대 코드입니다."
+        '409':
+          description: 이미 참여 중인 방
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: ALREADY_JOINED
+                message: "이미 참여 중인 방입니다."
+
+  /rooms/{roomId}:
+    get:
+      tags: [Rooms]
+      summary: 방 상세 조회
+      description: 방 대기 페이지 / 방 메인 페이지에서 사용.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 방 상세 정보
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # PARTICIPANTS
+  # ════════════════════════════════════════════
+  /rooms/{roomId}/participants:
+    get:
+      tags: [Participants]
+      summary: 참여자 목록 조회
+      description: 방 대기 페이지 참여자 목록 (미션 입력 수 포함).
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 참여자 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Participant'
+              example:
+                participants:
+                  - userId: "user_001"
+                    displayName: "홍길동"
+                    missionCount: 2
+                    isHost: true
+                  - userId: "user_002"
+                    displayName: "김철수"
+                    missionCount: 1
+                    isHost: false
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Participants]
+      summary: 방 입장 (참여자 등록)
+      description: |
+        방 입장 페이지에서 이름 입력 후 "다음" 버튼 클릭 시 호출.
+        이 API 호출로 유저가 방에 공식 가입됩니다.
+        방장의 경우 방 생성 후에도 이 API를 호출하여 참여자로 등록해야 합니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [displayName]
+              properties:
+                displayName:
+                  type: string
+                  description: 방 내에서 사용할 이름
+                  maxLength: 20
+            example:
+              displayName: "길동이"
+      responses:
+        '201':
+          description: 방 입장 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participant'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: 게임이 이미 시작된 방
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: GAME_ALREADY_STARTED
+                message: "이미 게임이 시작된 방에는 입장할 수 없습니다."
+        '409':
+          description: 이미 참여 중
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ════════════════════════════════════════════
+  # MISSIONS
+  # ════════════════════════════════════════════
+  /rooms/{roomId}/missions:
+    get:
+      tags: [Missions]
+      summary: 내 미션 목록 조회
+      description: 본인이 입력한 미션만 반환. 방 대기 페이지 및 방 메인 페이지 미션 체크박스에 사용.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 미션 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  missions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Mission'
+                  maxCount:
+                    type: integer
+                    description: 방 생성 시 설정된 최대 미션 수
+              example:
+                missions:
+                  - id: "mission_001"
+                    content: "매일 아침 인사 먼저 하기"
+                    isCompleted: false
+                  - id: "mission_002"
+                    content: "간식 몰래 책상에 올려놓기"
+                    isCompleted: true
+                maxCount: 3
+
+    post:
+      tags: [Missions]
+      summary: 미션 추가
+      description: |
+        방 생성 시 설정한 missionCount를 초과하여 생성할 수 없습니다.
+        초과 시 400 에러 반환.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  maxLength: 200
+            example:
+              content: "매일 아침 인사 먼저 하기"
+      responses:
+        '201':
+          description: 미션 추가 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mission'
+        '400':
+          description: 미션 개수 초과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: MISSION_LIMIT_EXCEEDED
+                message: "미션은 최대 3개까지 입력할 수 있습니다."
+
+  /rooms/{roomId}/missions/{missionId}:
+    patch:
+      tags: [Missions]
+      summary: 미션 수정
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+        - $ref: '#/components/parameters/missionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  maxLength: 200
+                isCompleted:
+                  type: boolean
+                  description: 미션 완료 여부 (방 메인 페이지 체크박스)
+            example:
+              content: "매일 아침 커피 사다주기"
+      responses:
+        '200':
+          description: 미션 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mission'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Missions]
+      summary: 미션 삭제
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+        - $ref: '#/components/parameters/missionId'
+      responses:
+        '204':
+          description: 미션 삭제 성공
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /missions/random:
+    get:
+      tags: [Missions]
+      summary: 랜덤 미션 조회
+      description: |
+        미션 입력 페이지에서 새로고침 버튼 클릭 시 호출.
+        DB에 저장된 미션 풀에서 랜덤으로 하나 반환.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: excludeIds
+          in: query
+          description: 제외할 미션 ID 목록 (현재 입력된 미션과 중복 방지)
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: 랜덤 미션
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: string
+              example:
+                content: "마니띠가 좋아하는 음료수 몰래 사다주기"
+
+  # ════════════════════════════════════════════
+  # GAME
+  # ════════════════════════════════════════════
+  /rooms/{roomId}/game/start:
+    post:
+      tags: [Game]
+      summary: 게임 시작 (방장 전용)
+      description: |
+        마니또를 랜덤 배정하고 게임을 시작합니다.
+        방장에게만 허용됩니다.
+        게임 시작 후 각 참여자의 마니띠 정보가 할당됩니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 게임 시작 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: IN_PROGRESS
+                  startedAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: 참여자가 2명 미만이거나 각자 미션 미입력
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: NOT_ENOUGH_PARTICIPANTS
+                message: "게임 시작을 위해 최소 2명의 참여자가 필요합니다."
+        '403':
+          description: 방장이 아님
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: NOT_HOST
+                message: "방장만 게임을 시작할 수 있습니다."
+
+  /rooms/{roomId}/game/end:
+    post:
+      tags: [Game]
+      summary: 게임 강제 종료 (데모 관리 페이지 전용)
+      description: |
+        데모 체험자가 결과 리포트 기능을 확인할 수 있도록 게임을 강제 종료합니다.
+        방장 또는 관리자 권한 필요.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 게임 종료 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ENDED
+                  endedAt:
+                    type: string
+                    format: date-time
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ════════════════════════════════════════════
+  # DAILY QUESTIONS
+  # ════════════════════════════════════════════
+  /rooms/{roomId}/questions/today:
+    get:
+      tags: [DailyQuestions]
+      summary: 오늘의 질문 조회
+      description: |
+        방 메인 페이지에서 사용.
+        - 나의 답변 여부
+        - 마니또의 답변 내용 (내가 답변한 경우에만 열람 가능)
+        - 마니또가 미답변 시 블러 처리 여부 플래그 포함
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 오늘의 질문
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodayQuestion'
+              example:
+                questionId: "q_001"
+                content: "당신이 가장 좋아하는 계절은?"
+                date: "2024-12-01"
+                myAnswer:
+                  answered: true
+                  content: "겨울이요. 눈이 좋아요."
+                manitoAnswer:
+                  answered: true
+                  visibleToMe: true
+                  content: "봄! 꽃이 피는 게 좋아요."
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /rooms/{roomId}/questions/today/answer:
+    post:
+      tags: [DailyQuestions]
+      summary: 오늘의 질문 답변 등록/수정
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  maxLength: 500
+            example:
+              content: "겨울이요. 눈이 좋아요."
+      responses:
+        '200':
+          description: 답변 등록/수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Answer'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /rooms/{roomId}/questions/history:
+    get:
+      tags: [DailyQuestions]
+      summary: 질문/답변 히스토리 조회 (힌트 답변 페이지)
+      description: |
+        질문 & 나의 답 & 마니또의 답변 쌍으로 내림차순 반환.
+        내가 답변하지 않은 날의 마니또 답변은 반환하지 않음(또는 blurred 플래그).
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 질문-답변 히스토리
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestionHistoryItem'
+              example:
+                history:
+                  - date: "2024-12-01"
+                    question: "당신이 가장 좋아하는 계절은?"
+                    myAnswer: "겨울이요."
+                    manitoAnswer: "봄! 꽃이 피는 게 좋아요."
+                    isBlurred: false
+                  - date: "2024-11-30"
+                    question: "최근 읽은 책은?"
+                    myAnswer: null
+                    manitoAnswer: null
+                    isBlurred: true
+
+  # ════════════════════════════════════════════
+  # NOTES (쪽지)
+  # ════════════════════════════════════════════
+  /rooms/{roomId}/notes:
+    post:
+      tags: [Notes]
+      summary: 쪽지 보내기
+      description: 내 마니띠에게 쪽지를 보냅니다. 게임 종료 후에는 불가.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  maxLength: 1000
+            example:
+              content: "오늘도 수고했어요! 슬쩍 간식 두고 갔어요 :)"
+      responses:
+        '201':
+          description: 쪽지 전송 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '403':
+          description: 게임 종료 후 쪽지 전송 불가 또는 권한 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: GAME_ENDED
+                message: "게임이 종료되어 쪽지를 보낼 수 없습니다."
+
+  /rooms/{roomId}/notes/sent:
+    get:
+      tags: [Notes]
+      summary: 보낸 쪽지함 조회
+      description: 내가 보낸 쪽지 내역 내림차순. 날짜 필터 지원.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+        - name: from
+          in: query
+          description: 필터 시작 날짜 (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: 필터 종료 날짜 (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 보낸 쪽지 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Note'
+
+  /rooms/{roomId}/notes/received:
+    get:
+      tags: [Notes]
+      summary: 받은 쪽지함 조회
+      description: 내가 받은 쪽지 내역 내림차순. 날짜 필터 지원.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+        - name: from
+          in: query
+          description: 필터 시작 날짜 (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: 필터 종료 날짜 (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 받은 쪽지 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Note'
+
+  /rooms/{roomId}/notes/{noteId}/read:
+    patch:
+      tags: [Notes]
+      summary: 쪽지 읽음 처리
+      description: 받은 쪽지 클릭 시 읽음 상태로 변경. 쪽지함 UI에서 접힌/펼쳐진 형태 전환에 사용.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 읽음 처리 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # RESULTS
+  # ════════════════════════════════════════════
+  /rooms/{roomId}/results/manitto-reveal:
+    get:
+      tags: [Results]
+      summary: 마니또 공개 결과 조회 (결과 리포트 - 1)
+      description: |
+        게임 종료 후에만 접근 가능.
+        - 나의 마니또 정보
+        - 전체 마니또→마니띠 체인
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 마니또 공개 결과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManittoRevealResult'
+              example:
+                myManitto:
+                  userId: "user_002"
+                  displayName: "김철수"
+                chain:
+                  - manitto:
+                      userId: "user_001"
+                      displayName: "홍길동"
+                    manitti:
+                      userId: "user_003"
+                      displayName: "이영희"
+                  - manitto:
+                      userId: "user_002"
+                      displayName: "김철수"
+                    manitti:
+                      userId: "user_001"
+                      displayName: "홍길동"
+        '403':
+          description: 게임이 아직 종료되지 않음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: GAME_NOT_ENDED
+                message: "게임이 종료된 후에 결과를 확인할 수 있습니다."
+
+  /rooms/{roomId}/results/my-report:
+    get:
+      tags: [Results]
+      summary: 내 결과 리포트 조회 (결과 리포트 - 2)
+      description: |
+        게임 종료 후 AI가 생성한 유형 분석 리포트.
+        - 유형명 (예: "장난꾸러기 요정")
+        - 유형 이미지 URL (AI 생성)
+        - 스토리 텍스트
+        최초 요청 시 AI 분석이 트리거되며 생성에 시간이 걸릴 수 있음.
+        상태(PENDING/READY)로 폴링 지원.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 내 결과 리포트
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyReport'
+              example:
+                status: READY
+                typeName: "장난꾸러기 요정"
+                typeImageUrl: "https://cdn.manitto.app/reports/img_xyz.png"
+                storyText: "저녁에 '사랑스러운 내 친구'라 부르며 달콤한 꿈을 빌어주는 걸 보니, 당신은 마니띠에게 잠자리 요정같은 마니또였을 거예요."
+        '202':
+          description: 리포트 생성 중 (폴링 필요)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: PENDING
+                  estimatedSeconds:
+                    type: integer
+                    example: 10
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ════════════════════════════════════════════
+  # MY MANITTI (게임 중 내 마니띠 정보)
+  # ════════════════════════════════════════════
+  /rooms/{roomId}/my-manitti:
+    get:
+      tags: [Game]
+      summary: 내 마니띠 정보 조회
+      description: 방 메인 페이지에서 "나의 마니띠" 섹션에 표시.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/roomId'
+      responses:
+        '200':
+          description: 마니띠 정보
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  displayName:
+                    type: string
+                    description: 마니띠 이름
+              example:
+                displayName: "이영희"
+        '403':
+          description: 게임이 시작되지 않음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+# ─────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    roomId:
+      name: roomId
+      in: path
+      required: true
+      description: 방 ID
+      schema:
+        type: string
+    missionId:
+      name: missionId
+      in: path
+      required: true
+      description: 미션 ID
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: 잘못된 요청 (유효성 검사 실패)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: VALIDATION_ERROR
+            message: "입력값이 올바르지 않습니다."
+    Unauthorized:
+      description: 인증 실패 (토큰 없음 또는 만료)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: UNAUTHORIZED
+            message: "인증이 필요합니다."
+    Forbidden:
+      description: 권한 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: FORBIDDEN
+            message: "접근 권한이 없습니다."
+    NotFound:
+      description: 리소스를 찾을 수 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: NOT_FOUND
+            message: "요청한 리소스를 찾을 수 없습니다."
+
+  schemas:
+
+    # ── Auth ──────────────────────────────────
+    RegisterRequest:
+      type: object
+      required: [name, username, password]
+      properties:
+        name:
+          type: string
+          description: 실명 (20자 미만)
+          maxLength: 19
+        username:
+          type: string
+          description: 아이디 (4~19자)
+          minLength: 4
+          maxLength: 19
+        password:
+          type: string
+          description: 비밀번호 (4~19자)
+          minLength: 4
+          maxLength: 19
+          format: password
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT 액세스 토큰 (단기, 예: 1시간)
+        refreshToken:
+          type: string
+          description: JWT 리프레시 토큰 (장기, 예: 30일)
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        username:
+          type: string
+
+    # ── Room ──────────────────────────────────
+    RoomSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/RoomStatus'
+        participantCount:
+          type: integer
+
+    RoomStatus:
+      type: string
+      enum: [WAITING, IN_PROGRESS, ENDED]
+      description: |
+        - WAITING: 시작 대기 ("기다리는 중…")
+        - IN_PROGRESS: 진행 중
+        - ENDED: 종료
+
+    CreateRoomRequest:
+      type: object
+      required: [name, endsAt, missionCount]
+      properties:
+        name:
+          type: string
+          description: 방 이름
+        description:
+          type: string
+          description: 방 소개
+        endsAt:
+          type: string
+          format: date-time
+          description: 종료 일시 (ISO 8601, 타임존 포함)
+        missionCount:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: 참여자당 입력해야 할 미션 개수
+
+    CreateRoomResponse:
+      type: object
+      properties:
+        roomId:
+          type: string
+        inviteCode:
+          type: string
+          description: 6자리 초대 코드
+        name:
+          type: string
+        description:
+          type: string
+        endsAt:
+          type: string
+          format: date-time
+        missionCount:
+          type: integer
+
+    RoomJoinPreview:
+      type: object
+      properties:
+        roomId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        missionCount:
+          type: integer
+        participantCount:
+          type: integer
+
+    RoomDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/RoomStatus'
+        inviteCode:
+          type: string
+          description: 방장에게만 노출
+        endsAt:
+          type: string
+          format: date-time
+        missionCount:
+          type: integer
+        participantCount:
+          type: integer
+        daysRemaining:
+          type: integer
+          description: 종료까지 남은 일수
+        isHost:
+          type: boolean
+          description: 현재 유저가 방장인지 여부
+
+    # ── Participant ────────────────────────────
+    Participant:
+      type: object
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+          description: 방 내 표시 이름
+        missionCount:
+          type: integer
+          description: 현재 입력한 미션 수
+        isHost:
+          type: boolean
+
+    # ── Mission ────────────────────────────────
+    Mission:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        isCompleted:
+          type: boolean
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Daily Question ─────────────────────────
+    TodayQuestion:
+      type: object
+      properties:
+        questionId:
+          type: string
+        content:
+          type: string
+        date:
+          type: string
+          format: date
+        myAnswer:
+          type: object
+          properties:
+            answered:
+              type: boolean
+            content:
+              type: string
+              nullable: true
+        manitoAnswer:
+          type: object
+          properties:
+            answered:
+              type: boolean
+            visibleToMe:
+              type: boolean
+              description: |
+                true: 마니또 답변 열람 가능 (내가 답변 완료한 경우)
+                false: 블러 처리 필요 (내가 미답변 상태)
+            content:
+              type: string
+              nullable: true
+              description: visibleToMe=false 이면 null 반환
+
+    Answer:
+      type: object
+      properties:
+        id:
+          type: string
+        questionId:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    QuestionHistoryItem:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        question:
+          type: string
+        myAnswer:
+          type: string
+          nullable: true
+        manitoAnswer:
+          type: string
+          nullable: true
+        isBlurred:
+          type: boolean
+          description: 내가 미답변 날 → true (마니또 답 숨김)
+
+    # ── Note ──────────────────────────────────
+    Note:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        isRead:
+          type: boolean
+          description: 받은 쪽지 읽음 여부. 보낸 쪽지함에서는 무의미.
+        sentAt:
+          type: string
+          format: date-time
+        direction:
+          type: string
+          enum: [SENT, RECEIVED]
+
+    # ── Results ───────────────────────────────
+    ManittoRevealResult:
+      type: object
+      properties:
+        myManitto:
+          type: object
+          properties:
+            userId:
+              type: string
+            displayName:
+              type: string
+        chain:
+          type: array
+          description: 전체 마니또→마니띠 체인
+          items:
+            type: object
+            properties:
+              manitto:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  displayName:
+                    type: string
+              manitti:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  displayName:
+                    type: string
+
+    MyReport:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [PENDING, READY]
+        typeName:
+          type: string
+          description: AI 생성 유형명 (예: "장난꾸러기 요정")
+          nullable: true
+        typeImageUrl:
+          type: string
+          format: uri
+          description: AI 생성 유형 이미지 URL
+          nullable: true
+        storyText:
+          type: string
+          description: AI 생성 결과 풀이 스토리
+          nullable: true
+
+    # ── Common ────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 에러 코드 (대문자 스네이크케이스)
+        message:
+          type: string
+          description: 사람이 읽을 수 있는 에러 메시지
