@@ -101,15 +101,6 @@ class _HintCardState extends State<HintCard> {
                     rotation: 8,
                   ),
                 ),
-                Positioned(
-                  bottom: -12,
-                  left: 22,
-                  child: WashiTape.horizontal(
-                    color: WashiTapeColor.blue,
-                    width: 82,
-                    rotation: -9,
-                  ),
-                ),
               ],
             ),
           ),

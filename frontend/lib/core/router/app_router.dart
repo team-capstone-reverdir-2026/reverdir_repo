@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/demo_set_screen.dart';
+import '../../features/game_result/presentation/result_screen.dart';
+import '../../features/hint/presentation/hint_collect_screen.dart';
+import '../../features/letter/presentation/letter_board_screen.dart';
+import '../../features/letter/presentation/letter_send_screen.dart';
 import '../../features/manitto_game/presentation/game_main_screen.dart';
 import '../storage/secure_storage_service.dart';
 import 'app_routes.dart';
@@ -61,21 +66,37 @@ final GoRouter appRouter = GoRouter(
           path: 'notes',
           builder: (context, state) {
             final roomId = state.pathParameters['roomId'] ?? '';
-            return _PlaceholderScreen(title: '쪽지함 · $roomId');
+            return LetterBoardScreen(roomId: roomId);
+          },
+          routes: [
+            GoRoute(
+              path: 'send',
+              builder: (context, state) {
+                final roomId = state.pathParameters['roomId'] ?? '';
+                return LetterSendScreen(roomId: roomId);
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: 'demo-admin',
+          builder: (context, state) {
+            final roomId = state.pathParameters['roomId'] ?? '';
+            return DemoSetScreen(roomId: roomId);
           },
         ),
         GoRoute(
           path: 'hints',
           builder: (context, state) {
             final roomId = state.pathParameters['roomId'] ?? '';
-            return _PlaceholderScreen(title: '힌트 · $roomId');
+            return HintCollectScreen(roomId: roomId);
           },
         ),
         GoRoute(
           path: 'results',
           builder: (context, state) {
             final roomId = state.pathParameters['roomId'] ?? '';
-            return _PlaceholderScreen(title: '결과 리포트 · $roomId');
+            return ResultScreen(roomId: roomId);
           },
         ),
       ],

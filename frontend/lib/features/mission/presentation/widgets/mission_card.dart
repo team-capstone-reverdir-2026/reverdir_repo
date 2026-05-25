@@ -95,15 +95,6 @@ class MissionListCard extends StatelessWidget {
               rotation: -7,
             ),
           ),
-          Positioned(
-            bottom: -12,
-            right: 22,
-            child: WashiTape.horizontal(
-              color: WashiTapeColor.pink,
-              width: 70,
-              rotation: 8,
-            ),
-          ),
         ],
       ),
     );

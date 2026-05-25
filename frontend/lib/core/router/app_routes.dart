@@ -19,8 +19,10 @@ class AppRoutes {
   // ── Room sub-features ─────────────────────────────────────────────────────
   static const String roomMissions = '/room/:roomId/missions';
   static const String roomNotes = '/room/:roomId/notes';
+  static const String roomLetterSend = '/room/:roomId/notes/send';
   static const String roomHints = '/room/:roomId/hints';
   static const String roomResults = '/room/:roomId/results';
+  static const String roomDemo = '/room/:roomId/demo-admin';
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -30,7 +32,11 @@ class AppRoutes {
 
   static String roomNotesPath(String roomId) => '/room/$roomId/notes';
 
+  static String roomLetterSendPath(String roomId) => '/room/$roomId/notes/send';
+
   static String roomHintsPath(String roomId) => '/room/$roomId/hints';
 
   static String roomResultsPath(String roomId) => '/room/$roomId/results';
+
+  static String roomDemoPath(String roomId) => '/room/$roomId/demo-admin';
 }

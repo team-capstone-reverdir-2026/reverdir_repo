@@ -1,18 +1,15 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/network/api_enums.dart';
-import '../../../core/network/error_handler.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/doodle_background.dart';
-import '../../../core/widgets/error_view.dart';
-import '../../../core/widgets/loading_indicator.dart';
-import '../provider/game_provider.dart';
+import '../data/mock_game_service.dart';
+import 'widgets/finished_view.dart';
 import 'widgets/in_progress_view.dart';
+import 'widgets/pre_start_view.dart';
 
 /// 방 메인 — GET /rooms/{roomId} (IN_PROGRESS)
 ///
@@ -30,133 +27,82 @@ class GameMainScreen extends StatefulWidget {
 }
 
 class _GameMainScreenState extends State<GameMainScreen> {
-  // ── 임시 UI 테스트 플래그 (true/false로 전환 후 Hot Reload) ─────────────
-  static const bool debugLoadingMode = false;
-  static const bool debugErrorMode = false;
-  static const bool debugMyAnswered = false;
-  static const bool debugManittoAnswered = true;
-
-  final _gameProvider = GameProvider();
+  final _service = MockGameService.instance;
 
   @override
   void initState() {
     super.initState();
-    _gameProvider.addListener(_onProviderChanged);
-    if (!debugLoadingMode && !debugErrorMode) {
-      _gameProvider.loadRoom(widget.roomId).then((_) {
-        _gameProvider.applyDebugQuestionFlags(
-          myAnswered: debugMyAnswered,
-          manittoAnswered: debugManittoAnswered,
-        );
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _gameProvider.removeListener(_onProviderChanged);
-    super.dispose();
-  }
-
-  void _onProviderChanged() {
-    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.CBackground,
-      body: DoodleBackground(
-        child: Stack(
-          children: [
-            _buildBody(),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _GameBottomBar(roomId: widget.roomId),
+      body: AnimatedBuilder(
+        animation: _service,
+        builder: (context, _) {
+          return DoodleBackground(
+            child: Stack(
+              children: [
+                _buildBody(),
+                if (_service.phase == GamePhase.inProgress)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _GameBottomBar(
+                      roomId: widget.roomId,
+                    ),
+                  ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildBody() {
-
-    if (debugLoadingMode) {
-      return const Center(child: LoadingIndicator(size: 40));
-    }
-
-    if (debugErrorMode) {
-      return ErrorView.fromApiException(
-        ApiException(
-          code: ErrorCode.gameNotEnded,
-          message: ErrorCode.gameNotEnded.displayLabel,
-        ),
-        onRetry: () {
-          // TODO: _gameProvider.loadRoom(widget.roomId);
-        },
-      );
-    }
-
-    if (_gameProvider.isLoading) {
-      return const Center(child: LoadingIndicator(size: 40));
-    }
-
-    if (_gameProvider.hasError && _gameProvider.error != null) {
-      return ErrorView.fromApiException(
-        _gameProvider.error!,
-        onRetry: () => _gameProvider.loadRoom(widget.roomId),
-      );
-    }
-
-    final question = _gameProvider.todayQuestion;
-    final missions = _gameProvider.missionProvider;
-    if (question == null || missions == null) {
-      return const Center(child: LoadingIndicator());
-    }
-
-    final debugQuestion = question.copyWithDebug(
-      myAnswered: debugMyAnswered,
-      manittoAnswered: debugManittoAnswered,
-    );
-
-    return InProgressView(
-      roomId: widget.roomId,
-      roomName: _gameProvider.roomName,
-      status: _gameProvider.roomStatus,
-      daysRemaining: _gameProvider.daysRemaining,
-      participantNames: _gameProvider.participantNames,
-      todayQuestion: debugQuestion,
-      missionProvider: missions,
-      myManittiDisplayName: _gameProvider.myManittiName,
-    );
-  }
-
-  Widget _buildDebugBanner() {
-    return Positioned(
-      top: MediaQuery.paddingOf(context).top,
-      left: 8,
-      right: 8,
-      child: Material(
-        color: AppColors.COrange.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Text(
-            'DEBUG loading=$debugLoadingMode error=$debugErrorMode '
-            'my=$debugMyAnswered manitto=$debugManittoAnswered',
-            style: AppTextStyles.caption,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 350),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: switch (_service.phase) {
+        GamePhase.preStart => PreStartView(
+            key: const ValueKey(GamePhase.preStart),
+            service: _service,
+            onStart: _service.startGame,
           ),
-        ),
-      ),
+        GamePhase.inProgress => InProgressView(
+            key: const ValueKey(GamePhase.inProgress),
+            roomId: widget.roomId,
+            roomName: _service.roomName,
+            status: _service.roomStatus,
+            daysRemaining: _service.daysRemaining,
+            participantNames: _service.participantNames,
+            todayQuestion: _service.todayQuestion,
+            missionProvider: _service.inProgressMissions,
+            onAnswerSubmitted: _service.submitTodayAnswer,
+            myManittiDisplayName: null,
+            endsAt: _service.endsAt,
+          ),
+        GamePhase.finished => FinishedView(
+            key: const ValueKey(GamePhase.finished),
+            service: _service,
+            onOpenLetters: () =>
+                context.push(AppRoutes.roomNotesPath(widget.roomId)),
+            onOpenResults: () =>
+                context.push(AppRoutes.roomResultsPath(widget.roomId)),
+          ),
+      },
     );
   }
 }
 
 class _GameBottomBar extends StatelessWidget {
-  const _GameBottomBar({required this.roomId});
+  const _GameBottomBar({
+    required this.roomId,
+  });
 
   final String roomId;
 
@@ -184,14 +130,6 @@ class _GameBottomBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _IconBarButton(
-            icon: Icons.settings_outlined,
-            onTap: () {
-              // TODO: 데모 관리 페이지 라우트 추가 후 연결
-              context.push('${AppRoutes.roomDetailPath(roomId)}/demo-admin');
-            },
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: _BottomActionButton(
               label: '쪽지함',
@@ -201,18 +139,20 @@ class _GameBottomBar extends StatelessWidget {
               onTap: () => context.push(AppRoutes.roomNotesPath(roomId)),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: _BottomActionButton(
               label: '쪽지 쓰기',
               backgroundColor: AppColors.CRed,
               foregroundColor: AppColors.CBackground,
               icon: Icons.edit_outlined,
-              onTap: () {
-                // TODO: LetterSender 화면/모달 라우트
-                context.push(AppRoutes.roomNotesPath(roomId));
-              },
+              onTap: () => context.push(AppRoutes.roomLetterSendPath(roomId)),
             ),
+          ),
+          const SizedBox(width: 10),
+          _IconBarButton(
+            icon: Icons.settings_outlined,
+            onTap: () => context.push(AppRoutes.roomDemoPath(roomId)),
           ),
         ],
       ),
@@ -264,7 +204,7 @@ class _BottomActionButton extends StatelessWidget {
   final Color backgroundColor;
   final Color foregroundColor;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

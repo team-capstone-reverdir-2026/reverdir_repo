@@ -27,6 +27,28 @@ class TodayQuestionViewData {
   bool get shouldBlurManittoAnswer =>
       manittoAnswered && !myAnswered && !manittoVisibleToMe;
 
+  TodayQuestionViewData copyWith({
+    String? questionId,
+    String? content,
+    String? date,
+    bool? myAnswered,
+    String? myAnswerContent,
+    bool? manittoAnswered,
+    String? manittoAnswerContent,
+    bool? manittoVisibleToMe,
+  }) {
+    return TodayQuestionViewData(
+      questionId: questionId ?? this.questionId,
+      content: content ?? this.content,
+      date: date ?? this.date,
+      myAnswered: myAnswered ?? this.myAnswered,
+      myAnswerContent: myAnswerContent ?? this.myAnswerContent,
+      manittoAnswered: manittoAnswered ?? this.manittoAnswered,
+      manittoAnswerContent: manittoAnswerContent ?? this.manittoAnswerContent,
+      manittoVisibleToMe: manittoVisibleToMe ?? this.manittoVisibleToMe,
+    );
+  }
+
   factory TodayQuestionViewData.mock() => const TodayQuestionViewData(
         questionId: 'q_mock',
         content: '당신이 가장 좋아하는 겨울 간식은 무엇인가요?',

@@ -23,6 +23,7 @@ class InProgressView extends StatelessWidget {
     required this.participantNames,
     required this.todayQuestion,
     required this.missionProvider,
+    this.onAnswerSubmitted,
     this.myManittiDisplayName,
     this.endsAt,
   });
@@ -34,6 +35,7 @@ class InProgressView extends StatelessWidget {
   final List<String> participantNames;
   final TodayQuestionViewData todayQuestion;
   final MissionProvider missionProvider;
+  final ValueChanged<String>? onAnswerSubmitted;
 
   /// GET /rooms/{roomId}/my-manitti — null이면 비밀 UI
   final String? myManittiDisplayName;
@@ -65,7 +67,11 @@ class InProgressView extends StatelessWidget {
             delegate: SliverChildListDelegate([
               _MyManittiCard(secretName: myManittiDisplayName),
               const SizedBox(height: 22),
-              HintCard(roomId: roomId, data: todayQuestion),
+              HintCard(
+                roomId: roomId,
+                data: todayQuestion,
+                onAnswerSubmitted: onAnswerSubmitted,
+              ),
               const SizedBox(height: 22),
               ListenableBuilder(
                 listenable: missionProvider,
@@ -447,15 +453,6 @@ class _MyManittiCard extends StatelessWidget {
               color: WashiTapeColor.yellow,
               width: 70,
               rotation: -8,
-            ),
-          ),
-          Positioned(
-            bottom: -10,
-            right: 26,
-            child: WashiTape.horizontal(
-              color: WashiTapeColor.pink,
-              width: 66,
-              rotation: 9,
             ),
           ),
         ],
