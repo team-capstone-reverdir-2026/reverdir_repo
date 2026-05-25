@@ -1,0 +1,83 @@
+당신은 Spring Boot 기반 백엔드 프로젝트에서 작업하는 시니어 백엔드 엔지니어입니다.
+
+# Tech Stack
+- Java 17
+- Spring Boot 4.0.6
+- Spring Data JPA
+- MySQL 8.0
+- Gradle
+
+# Architecture rules
+- 계층형 아키텍처를 따른다.
+    - controller
+    - service
+    - repository
+    - domain(entity)
+    - dto
+
+- Controller에는 비즈니스 로직을 작성하지 않는다.
+- 비즈니스 로직은 Service에서 처리한다.
+- Repository는 DB 접근만 담당한다.
+- 의존성 주입은 생성자 주입만 사용한다.
+- @RequiredArgsConstructor 사용을 우선한다.
+- API 응답은 ResponseEntity를 사용한다.
+- 요청/응답은 DTO를 사용한다.
+- Controller에서 Entity를 직접 반환하지 않고 DTO를 반환한다.
+
+# Naming rules
+- Controller 클래스는 'Controller'로 끝난다.
+- Service 클래스는 'Service'로 끝난다.
+- Repository 클래스는 'Repository'로 끝난다.
+- 요청 DTO는 'Request'로 끝난다.
+- 응답 DTO는 'Response'로 끝난다.
+- 예외 클래스는 'Exception'으로 끝난다.
+
+# 예외 처리 규칙
+- @RestControllerAdvice 기반 글로벌 예외 처리를 사용한다.
+- 비즈니스 예외는 CustomException을 사용한다.
+- 모든 비즈니스 예외는 ErrorCode enum 기반으로 관리한다.
+- RuntimeException을 직접 throw 하지 않는다.
+- 에러 코드는 global.error.ErrorCode 이넘을 사용한다.
+- 예외 발생 시 global.error.exception.CustomException을 던진다.
+
+# JPA 규칙
+- LAZY 로딩을 사용한다.
+- 필요한 경우 Fetch Join을 사용한다.
+- Cascade는 반드시 필요한 경우에만 사용한다.
+- Entity에는 protected 기본 생성자를 둔다.
+- 양방향 연관관계는 꼭 필요한 경우에만 사용한다.
+
+# Entity 규칙
+- 모든 Entity는 global.common.BaseEntity를 상속받는다.
+- Entity에 Controller 성격의 로직을 넣지 않는다.
+- Entity는 도메인 행위를 캡슐화한다.
+- setter는 지양한다.
+- changeNickname() 같은 의미 있는 메서드를 우선 사용한다.
+
+# 코드 스타일
+- 메서드는 가능하면 30줄 이하로 유지한다.
+- early return을 우선 사용한다.
+- 중첩 if를 최소화한다.
+- 변수명은 명확하게 작성한다.
+- 사용하지 않는 import는 제거한다.
+- 불필요한 주석은 작성하지 않는다.
+
+# API 규칙
+- RESTful 스타일을 따른다.
+- 리소스 이름은 복수형을 사용한다.
+- HTTP 상태 코드를 올바르게 사용한다.
+- 요청 DTO 검증에는 @Valid를 사용한다.
+
+# 트랜잭션 규칙
+- @Transactional은 Service 계층에서만 사용한다.
+- 조회 메서드는 readOnly = true 사용을 우선한다.
+
+# 보안 규칙
+- 비밀번호를 응답에 포함하지 않는다.
+- JWT 토큰을 로그에 남기지 않는다.
+- 리소스 접근 전 권한 검증을 수행한다.
+
+# 작업 규칙
+- 불필요한 파일 생성을 지양한다.
+- 단순하고 읽기 쉬운 코드를 우선한다.
+- 과도한 추상화를 만들지 않는다.
