@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// 앱 전역 텍스트 스타일.
+/// 앱 전역 텍스트 스타일 (doc/api-docs.json UI 라벨·본문 대응).
 ///
-/// 마니또 앱의 아기자기·따뜻한 톤에 맞춘 크기·굵기 위계.
+/// - RoomSummary.name → [roomName]
+/// - RoomStatus.displayLabel → [statusBadge]
+/// - ErrorResponse.message → [errorMessage]
+/// - Note.content / Mission.content → [bodyMedium]
+///
 /// [fontFamily]만 바꾸면 모든 스타일에 귀여운 한글 폰트를 일괄 적용할 수 있습니다.
 class AppTextStyles {
   AppTextStyles._();
@@ -117,6 +121,35 @@ class AppTextStyles {
     height: 1.3,
     letterSpacing: 0.3,
     color: AppColors.CTextSecondary,
+    fontFamily: fontFamily,
+  );
+
+  /// RoomStatus · ReportStatus · Note.direction 뱃지
+  static const TextStyle statusBadge = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    height: 1.25,
+    letterSpacing: 0.15,
+    color: AppColors.CTextPrimary,
+    fontFamily: fontFamily,
+  );
+
+  /// GET /rooms — RoomSummary.name
+  static const TextStyle roomName = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    height: 1.35,
+    letterSpacing: 0,
+    color: AppColors.CTextPrimary,
+    fontFamily: fontFamily,
+  );
+
+  /// ErrorResponse.message · 스낵바/다이얼로그
+  static const TextStyle errorMessage = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    height: 1.45,
+    color: AppColors.CBackground,
     fontFamily: fontFamily,
   );
 
