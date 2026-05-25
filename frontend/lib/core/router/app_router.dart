@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/manitto_game/presentation/game_main_screen.dart';
 import '../storage/secure_storage_service.dart';
 import 'app_routes.dart';
 
@@ -16,8 +17,9 @@ import 'app_routes.dart';
 /// runApp(MaterialApp.router(routerConfig: appRouter, theme: AppTheme.light));
 /// ```
 final GoRouter appRouter = GoRouter(
-  initialLocation: AppRoutes.login,
-  debugLogDiagnostics: true,
+  //initialLocation: AppRoutes.login,
+  initialLocation: '/room/test-room-123', // 임시 방 상세 화면
+  //debugLogDiagnostics: true,
   redirect: _authRedirect,
   routes: [
     GoRoute(
@@ -44,7 +46,8 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.roomDetail,
       builder: (context, state) {
         final roomId = state.pathParameters['roomId'] ?? '';
-        return _PlaceholderScreen(title: '방 상세 · $roomId');
+        // TODO: RoomStatus에 따라 pre_start / finished 분기
+        return GameMainScreen(roomId: roomId);
       },
       routes: [
         GoRoute(
@@ -85,19 +88,19 @@ final GoRouter appRouter = GoRouter(
 /// TODO: 온보딩 미완료 시 [LocalStorageService.isOnboardingCompleted] 분기 추가
 /// TODO: refresh 실패 후 login 외 public 경로 화이트리스트 정교화
 Future<String?> _authRedirect(BuildContext context, GoRouterState state) async {
-  final isLoggedIn = await SecureStorageService.instance.hasAccessToken();
-  final location = state.matchedLocation;
+  // final isLoggedIn = await SecureStorageService.instance.hasAccessToken();
+  // final location = state.matchedLocation;
 
-  final isAuthRoute =
-      location == AppRoutes.login || location == AppRoutes.register;
+  // final isAuthRoute =
+  //     location == AppRoutes.login || location == AppRoutes.register;
 
-  if (!isLoggedIn && !isAuthRoute) {
-    return AppRoutes.login;
-  }
+  // if (!isLoggedIn && !isAuthRoute) {
+  //   return AppRoutes.login;
+  // }
 
-  if (isLoggedIn && isAuthRoute) {
-    return AppRoutes.home;
-  }
+  // if (isLoggedIn && isAuthRoute) {
+  //   return AppRoutes.home;
+  // }
 
   return null;
 }

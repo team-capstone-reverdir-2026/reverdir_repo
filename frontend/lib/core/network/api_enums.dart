@@ -1,6 +1,7 @@
 /// doc/api-docs.json 공통 enum·에러 코드.
 ///
 /// Feature·Theme·ErrorHandler는 이 파일만 참조합니다.
+library;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 도메인 상태 (components/schemas)
@@ -176,8 +177,7 @@ enum ErrorCode {
         ErrorCode.alreadyJoined => '이미 참여 중인 방입니다.',
         ErrorCode.gameAlreadyStarted => '이미 게임이 시작된 방에는 입장할 수 없습니다.',
         ErrorCode.missionLimitExceeded => '미션은 최대 개수까지 입력할 수 있습니다.',
-        ErrorCode.notEnoughParticipants =>
-          '게임 시작을 위해 최소 2명의 참여자가 필요합니다.',
+        ErrorCode.notEnoughParticipants => '게임 시작을 위해 최소 2명의 참여자가 필요합니다.',
         ErrorCode.notHost => '방장만 게임을 시작할 수 있습니다.',
         ErrorCode.gameEnded => '게임이 종료되어 쪽지를 보낼 수 없습니다.',
         ErrorCode.gameNotEnded => '게임이 종료된 후에 결과를 확인할 수 있습니다.',
