@@ -1,6 +1,7 @@
 package com.reverdir.tomanito.note.repository;
 
 import com.reverdir.tomanito.note.domain.Note;
+import com.reverdir.tomanito.participant.domain.Participant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,8 @@ import java.util.Optional;
 public interface NoteRepository extends JpaRepository<Note, Long> {
 
     Optional<Note> findByIdAndRoomId(Long id, Long roomId);
+
+    List<Note> findAllBySender(Participant sender);
 
     @Query("""
             SELECT n FROM Note n
