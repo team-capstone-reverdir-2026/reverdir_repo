@@ -25,9 +25,11 @@ class GameMainScreen extends StatefulWidget {
   const GameMainScreen({
     super.key,
     required this.roomId,
+    this.myDisplayName,
   });
 
   final String roomId;
+  final String? myDisplayName;
 
   @override
   State<GameMainScreen> createState() => _GameMainScreenState();
@@ -42,6 +44,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
   List<ParticipantData> _participants = const [];
   List<EditableMission> _draftMissions = const [];
   List<MissionUiItem> _missions = const [];
+  int _maxMissionCount = 0;
   TodayQuestionViewData? _todayQuestion;
   String? _myManittiName;
 
@@ -84,8 +87,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
 
   Widget _buildBody() {
     final detail = _detail;
-    final question = _todayQuestion;
-    if (detail == null || question == null) {
+    if (detail == null) {
       return const SizedBox.shrink();
     }
     final phase = switch (detail.status) {
@@ -99,13 +101,15 @@ class _GameMainScreenState extends State<GameMainScreen> {
       switchOutCurve: Curves.easeInCubic,
       child: switch (phase) {
         GamePhase.preStart => PreStartView(
-            key: const ValueKey(GamePhase.preStart),
+            key: ValueKey('preStart_${_draftMissions.length}_$_maxMissionCount'),
             roomName: detail.name,
             roomDescription: detail.description,
-            inviteCode: '',
-            maxMissionCount: _missions.length,
+            inviteCode: detail.inviteCode ?? '',
+            maxMissionCount: _maxMissionCount,
             isHost: detail.isHost,
             participants: _participants,
+            myMissionCount: _draftMissions.length,
+            myDisplayName: widget.myDisplayName,
             myMissions: _draftMissions,
             onStart: _startGame,
             onAddMission: _addMission,
@@ -121,7 +125,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
             daysRemaining: detail.daysRemaining,
             participantNames:
                 _participants.map((e) => e.displayName).toList(growable: false),
-            todayQuestion: question,
+            todayQuestion: _todayQuestion!,
             missionProvider: MissionProvider(
               _missions,
               onToggleRemote: (missionId, isCompleted) {
@@ -157,19 +161,29 @@ class _GameMainScreenState extends State<GameMainScreen> {
     try {
       final detail = await _repo.fetchRoomDetail(widget.roomId);
       final participants = await _repo.fetchParticipants(widget.roomId);
-      final missions = await _repo.fetchMissions(widget.roomId);
-      final question = await _repo.fetchTodayQuestion(widget.roomId);
+      final missionData = await _repo.fetchMissions(widget.roomId);
+
+      TodayQuestionViewData? question;
       String? myManitti;
-      try {
-        myManitti = await _repo.fetchMyManittiName(widget.roomId);
-      } catch (_) {}
+
+      if (detail.status == RoomStatus.inProgress) {
+        question = await _repo.fetchTodayQuestion(widget.roomId);
+        try {
+          myManitti = await _repo.fetchMyManittiName(widget.roomId);
+        } catch (_) {}
+      }
+
+      final maxCount = missionData.maxCount > 0
+          ? missionData.maxCount
+          : detail.missionCount;
 
       if (!mounted) return;
       setState(() {
         _detail = detail;
         _participants = participants;
-        _missions = missions;
-        _draftMissions = missions
+        _missions = missionData.missions;
+        _maxMissionCount = maxCount;
+        _draftMissions = missionData.missions
             .map((m) => EditableMission(id: m.id, content: m.content))
             .toList(growable: false);
         _todayQuestion = question;

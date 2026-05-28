@@ -59,12 +59,14 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.roomJoinProfile,
       builder: (_, state) {
+        final roomId = state.uri.queryParameters['roomId'] ?? '';
         final code = state.uri.queryParameters['code'] ?? '';
         final missionCount = int.tryParse(
               state.uri.queryParameters['missionCount'] ?? '',
             ) ??
             1;
         return RoomJoinScreen(
+          roomId: roomId,
           invitationCode: code,
           missionCount: missionCount,
         );
@@ -73,16 +75,14 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.roomJoinMissions,
       builder: (_, state) {
-        final code = state.uri.queryParameters['code'] ?? '';
+        final roomId = state.uri.queryParameters['roomId'] ?? '';
         final missionCount = int.tryParse(
               state.uri.queryParameters['missionCount'] ?? '',
             ) ??
             1;
-        final userName = Uri.decodeComponent(
-          state.uri.queryParameters['userName'] ?? '',
-        );
+        final userName = state.uri.queryParameters['userName'] ?? '';
         return MissionInputScreen(
-          invitationCode: code,
+          roomId: roomId,
           missionCount: missionCount,
           userName: userName,
         );
@@ -92,8 +92,13 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.roomDetail,
       builder: (context, state) {
         final roomId = state.pathParameters['roomId'] ?? '';
-        // TODO: RoomStatus에 따라 pre_start / finished 분기
-        return GameMainScreen(roomId: roomId);
+        final displayName = state.uri.queryParameters['displayName']?.trim();
+        return GameMainScreen(
+          key: ValueKey(state.uri.toString()),
+          roomId: roomId,
+          myDisplayName:
+              displayName == null || displayName.isEmpty ? null : displayName,
+        );
       },
       routes: [
         GoRoute(

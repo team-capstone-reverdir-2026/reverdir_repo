@@ -87,22 +87,28 @@ class _RoomCreateScreenState extends State<RoomCreateScreen> {
 
       final data = res.data ?? const <String, dynamic>{};
       final inviteCode = (data['inviteCode'] as String?)?.trim() ?? '';
+      final roomId = (data['roomId'] as String?)?.trim() ?? '';
 
       if (!mounted) return;
 
-      if (inviteCode.isEmpty) {
+      if (roomId.isEmpty) {
         throw ApiException(
           code: ErrorCode.unknown,
-          message: '초대 코드가 응답에 없습니다.',
+          message: '방 ID가 응답에 없습니다.',
         );
       }
 
-      context.push(
-        AppRoutes.roomJoinProfilePath(
-          invitationCode: inviteCode,
-          missionCount: _missionCount,
-        ),
-      );
+      if (inviteCode.isNotEmpty) {
+        context.push(
+          AppRoutes.roomJoinProfilePath(
+            roomId: roomId,
+            invitationCode: inviteCode,
+            missionCount: _missionCount,
+          ),
+        );
+      } else {
+        context.go(AppRoutes.roomDetailPath(roomId));
+      }
     } catch (e, s) {
       final snackBarMessage =
           '[API 에러] POST ${_apiPath(ApiEndpoints.rooms)} 연결 실패 - 서버 상태를 확인하세요.';

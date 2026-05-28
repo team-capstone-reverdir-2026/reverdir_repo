@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_enums.dart';
 import '../../../core/network/api_error_tracker.dart';
+import '../../../core/network/error_handler.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/doodle_background.dart';
 import '../../../core/widgets/logout_button.dart';
 import '../../main/data/main_repository.dart';
 import 'widgets/invite_code_dialog.dart';
@@ -38,7 +41,8 @@ class _MainPageScreenState extends State<MainPageScreen> {
         title: const Text('참여 중인 방'),
         actions: const [LogoutButton(compact: true)],
       ),
-      body: Padding(
+      body: DoodleBackground(
+        child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,6 +85,7 @@ class _MainPageScreenState extends State<MainPageScreen> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -120,13 +125,35 @@ class _MainPageScreenState extends State<MainPageScreen> {
     try {
       final preview = await _repo.previewJoinCode(code);
       if (!mounted) return;
+      if (preview.roomId.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('방 정보를 찾지 못했습니다. 초대 코드를 다시 확인해 주세요.'),
+          ),
+        );
+        return;
+      }
       context.push(
         AppRoutes.roomJoinProfilePath(
+          roomId: preview.roomId,
           invitationCode: code,
           missionCount: preview.missionCount <= 0 ? 1 : preview.missionCount,
         ),
       );
     } catch (e, s) {
+      if (e is ApiException && e.code == ErrorCode.alreadyJoined) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '이미 참여 중인 방이에요. 아래 목록에서 방을 선택해 주세요.',
+              style: AppTextStyles.bodyMedium,
+            ),
+          ),
+        );
+        await _load();
+        return;
+      }
       final message = ApiErrorTracker.logAndBuildMessage(
         method: 'POST',
         url: ApiEndpoints.roomsJoin,

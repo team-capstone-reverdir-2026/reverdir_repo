@@ -1,23 +1,29 @@
 import 'dart:developer' as developer;
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_enums.dart';
+import '../../../core/network/error_handler.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/custom_text_field.dart';
+import '../../../core/widgets/doodle_background.dart';
 
 class RoomJoinScreen extends StatefulWidget {
   const RoomJoinScreen({
     super.key,
+    required this.roomId,
     required this.invitationCode,
     required this.missionCount,
   });
 
+  final String roomId;
   final String invitationCode;
   final int missionCount;
 
@@ -29,31 +35,10 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
   final TextEditingController _nameController = TextEditingController();
   bool _submitting = false;
 
-  String _apiPath(String endpointPath) => '/api/v1$endpointPath';
-
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
-  }
-
-  void _showApiError({
-    required String method,
-    required String url,
-    required Object error,
-    StackTrace? stackTrace,
-  }) {
-    final message = '[API 에러] $method $url 연결 실패 - 서버 상태를 확인하세요.';
-    developer.log(
-      message,
-      name: 'ReverdirApi',
-      error: error,
-      stackTrace: stackTrace,
-    );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   Future<void> _goNext() async {
@@ -65,27 +50,50 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
       return;
     }
 
+    if (widget.roomId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('방 정보가 없습니다. 초대 코드부터 다시 시도해 주세요.')),
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
     try {
       await apiClient.post<Map<String, dynamic>>(
-        ApiEndpoints.roomsJoin,
-        data: {'inviteCode': widget.invitationCode},
+        ApiEndpoints.roomParticipants(widget.roomId),
+        data: {'displayName': userName},
       );
 
       if (!mounted) return;
       context.push(
         AppRoutes.roomJoinMissionsPath(
-          invitationCode: widget.invitationCode,
+          roomId: widget.roomId,
           missionCount: widget.missionCount,
-          userName: Uri.encodeComponent(userName),
+          userName: userName,
         ),
       );
+    } on ApiException catch (e, s) {
+      if (e.code == ErrorCode.alreadyJoined) {
+        if (!mounted) return;
+        context.push(
+          AppRoutes.roomJoinMissionsPath(
+            roomId: widget.roomId,
+            missionCount: widget.missionCount,
+            userName: userName,
+          ),
+        );
+        return;
+      }
+      developer.log('참여자 등록 실패', name: 'ReverdirApi', error: e, stackTrace: s);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
     } catch (e, s) {
-      _showApiError(
-        method: 'POST',
-        url: _apiPath(ApiEndpoints.roomsJoin),
-        error: e,
-        stackTrace: s,
+      developer.log('참여자 등록 실패', name: 'ReverdirApi', error: e, stackTrace: s);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('입장에 실패했습니다. 다시 시도해 주세요.')),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -96,95 +104,61 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.CBackground,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Transform.rotate(
-                angle: -1.0 * math.pi / 180,
-                child: Hero(
-                  tag: 'notebook_container',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.CIvory.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: AppColors.CBrown.withValues(alpha: 0.45),
-                          width: 1.2,
-                        ),
+      appBar: AppBar(title: const Text('방 입장')),
+      body: DoodleBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.CSkyBlue.withValues(alpha: 0.22),
+                    borderRadius: AppTheme.borderRadius,
+                    border: AppTheme.handDrawnBorder(color: AppColors.CSkyBlue),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        '당신은 누구십니까?',
+                        style: AppTextStyles.titleLarge,
+                        textAlign: TextAlign.center,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            '당신은 누구십니까?',
-                            style: AppTextStyles.titleLarge,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 18),
-                          TextField(
-                            controller: _nameController,
-                            maxLength: 20,
-                            decoration: InputDecoration(
-                              counterText: '',
-                              filled: true,
-                              fillColor: Colors.transparent,
-                              hintText: '방에서 사용할 이름을 입력해 주세요',
-                              hintStyle: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.CTextTertiary,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: AppColors.CBrown.withValues(alpha: 0.45),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: AppColors.CBrown.withValues(alpha: 0.45),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(
-                                  color: AppColors.COrange,
-                                  width: 1.8,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 18),
+                      CustomTextField(
+                        controller: _nameController,
+                        hint: '방에서 사용할 이름을 입력해 주세요',
+                        maxLength: 20,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _goNext(),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ),
-              const Spacer(),
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomButton(
-                      label: '이전',
-                      onPressed: _submitting ? null : () => context.go(AppRoutes.home),
-                      variant: CustomButtonVariant.outlined,
+                const Spacer(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomButton(
+                        label: '이전',
+                        onPressed: _submitting ? null : () => context.pop(),
+                        variant: CustomButtonVariant.outlined,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: CustomButton(
-                      label: _submitting ? '확인 중...' : '다음',
-                      onPressed: _submitting ? null : _goNext,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: CustomButton(
+                        label: _submitting ? '입장 중...' : '다음',
+                        onPressed: _submitting ? null : _goNext,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../../core/widgets/washi_tape.dart';
+import '../../../core/network/api_enums.dart';
 import '../../manitto_game/data/game_repository.dart';
 import 'widgets/hint_blur.dart';
 
@@ -39,6 +40,17 @@ class _HintCollectScreenState extends State<HintCollectScreen> {
       _error = null;
     });
     try {
+      final detail = await _repo.fetchRoomDetail(widget.roomId);
+      if (detail.status != RoomStatus.inProgress) {
+        if (!mounted) return;
+        setState(() {
+          _history = const [];
+          _error = detail.status == RoomStatus.waiting
+              ? '게임이 시작되면 힌트 내역을 볼 수 있어요.'
+              : '종료된 방의 힌트 내역은 결과 화면에서 확인해 주세요.';
+        });
+        return;
+      }
       final history = await _repo.fetchQuestionHistory(widget.roomId);
       if (!mounted) return;
       setState(() => _history = history..sort((a, b) => b.date.compareTo(a.date)));

@@ -16,6 +16,7 @@ enum RoomStatus {
   static RoomStatus? tryParse(String? raw) {
     switch (raw) {
       case 'WAITING':
+      case 'BEFORE_START':
         return RoomStatus.waiting;
       case 'IN_PROGRESS':
         return RoomStatus.inProgress;
