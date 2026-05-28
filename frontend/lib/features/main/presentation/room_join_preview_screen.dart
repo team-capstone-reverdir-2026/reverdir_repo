@@ -6,6 +6,7 @@ import '../../../core/network/api_error_tracker.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_back_button.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../data/main_repository.dart';
 
@@ -92,9 +93,7 @@ class _RoomJoinPreviewScreenState extends State<RoomJoinPreviewScreen> {
       );
       if (!mounted) return;
       setState(() => _apiError = message);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message, style: AppTextStyles.errorMessage)),
-      );
+      context.showSnackBar(message);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

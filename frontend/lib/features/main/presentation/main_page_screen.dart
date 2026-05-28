@@ -11,6 +11,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/doodle_background.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/logout_button.dart';
 import '../../main/data/main_repository.dart';
 import '../../room/data/room_invite_code_cache.dart';
@@ -109,9 +110,7 @@ class _MainPageScreenState extends State<MainPageScreen> {
       );
       if (!mounted) return;
       setState(() => _apiError = message);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message, style: AppTextStyles.errorMessage)),
-      );
+      context.showSnackBar(message);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -127,10 +126,8 @@ class _MainPageScreenState extends State<MainPageScreen> {
       final preview = await _repo.previewJoinCode(code);
       if (!mounted) return;
       if (preview.roomId.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('방 정보를 찾지 못했습니다. 초대 코드를 다시 확인해 주세요.'),
-          ),
+        context.showSnackBar(
+          '방 정보를 찾지 못했습니다. 초대 코드를 다시 확인해 주세요.',
         );
         return;
       }
@@ -145,13 +142,8 @@ class _MainPageScreenState extends State<MainPageScreen> {
     } catch (e, s) {
       if (e is ApiException && e.code == ErrorCode.alreadyJoined) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '이미 참여 중인 방이에요. 아래 목록에서 방을 선택해 주세요.',
-              style: AppTextStyles.bodyMedium,
-            ),
-          ),
+        context.showSnackBar(
+          '이미 참여 중인 방이에요. 아래 목록에서 방을 선택해 주세요.',
         );
         await _load();
         return;
@@ -164,9 +156,7 @@ class _MainPageScreenState extends State<MainPageScreen> {
       );
       if (!mounted) return;
       setState(() => _apiError = message);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message, style: AppTextStyles.errorMessage)),
-      );
+      context.showSnackBar(message);
     }
   }
 }

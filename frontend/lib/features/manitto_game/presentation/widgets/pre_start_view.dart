@@ -123,7 +123,7 @@ class _PreStartViewState extends State<PreStartView> {
       await widget.onStart();
     } catch (e) {
       if (!mounted) return;
-      context.showErrorSnackBar('API 호출/응답 문제: $e');
+      context.showUserError(e);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -140,7 +140,7 @@ class _PreStartViewState extends State<PreStartView> {
       _missionController.clear();
     } catch (e) {
       if (!mounted) return;
-      context.showErrorSnackBar('API 호출/응답 문제: $e');
+      context.showUserError(e);
     }
   }
 
@@ -154,7 +154,7 @@ class _PreStartViewState extends State<PreStartView> {
       context.showSnackBar('추천 미션을 채워뒀어요!');
     } catch (e) {
       if (!mounted) return;
-      context.showErrorSnackBar('API 호출/응답 문제: $e');
+      context.showUserError(e);
     }
   }
 }
@@ -231,42 +231,68 @@ class _RoomIntro extends StatelessWidget {
               borderRadius: AppTheme.borderRadius,
               border: AppTheme.handDrawnBorder(color: AppColors.CRed),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        roomName,
-                        style: AppTextStyles.titleLarge,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                Padding(
+                  padding: EdgeInsets.only(
+                    bottom: inviteCode.isNotEmpty ? 40 : 0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              roomName,
+                              style: AppTextStyles.titleLarge,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const TomatoMascot(
+                            variant: TomatoMascotVariant.peeking,
+                            size: 34,
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    const TomatoMascot(
-                      variant: TomatoMascotVariant.peeking,
-                      size: 34,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  roomDescription,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.CTextSecondary,
+                      const SizedBox(height: 8),
+                      Text(
+                        roomDescription,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.CTextSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (inviteCode.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    '초대 코드 $inviteCode',
-                    style: AppTextStyles.statusBadge.copyWith(
-                      color: AppColors.CRed,
+                if (inviteCode.isNotEmpty)
+                  Positioned(
+                    right: 4,
+                    bottom: 8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '초대 코드',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.CTextSecondary,
+                          ),
+                        ),
+                        Text(
+                          inviteCode,
+                          style: AppTextStyles.titleLarge.copyWith(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.CRed,
+                            letterSpacing: 2.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
               ],
             ),
           ),

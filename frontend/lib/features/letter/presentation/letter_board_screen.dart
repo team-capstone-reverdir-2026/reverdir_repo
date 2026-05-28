@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_enums.dart';
+import '../../../core/network/api_error_tracker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
@@ -161,7 +162,7 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'API 호출/응답 문제: $e');
+      setState(() => _error = ApiErrorTracker.userMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

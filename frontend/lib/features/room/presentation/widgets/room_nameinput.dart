@@ -17,11 +17,6 @@ class RoomNameInput extends StatelessWidget {
   final bool enabled;
   final ValueChanged<String>? onChanged;
 
-  String? _buildErrorText() {
-    if (apiException == null) return null;
-    return 'API 호출/응답 문제: ${apiException!.message}';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -77,8 +72,6 @@ class RoomNameInput extends StatelessWidget {
                 width: 2.0,
               ),
             ),
-            errorText: _buildErrorText(),
-            errorStyle: AppTextStyles.caption.copyWith(color: AppColors.CRed),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
