@@ -1,12 +1,27 @@
 spring:
   application:
     name: to-manito
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
   mvc:
     cors:
       allowed-origins: "*"
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 3600000      # 1시간 (밀리초)
+  refresh-token-expiration: 2592000000  # 30일 (밀리초)
 
 google:
   gemini:
     api:
       key: ${GEMINI_API_KEY}
-    model: gemini-2.5-flash
+    model: gemini-3.1-flash-lite
