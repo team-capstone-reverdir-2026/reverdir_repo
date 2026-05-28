@@ -6,12 +6,12 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // ── Servers (openapi servers[]) ─────────────────────────────────────────
-  static const String productionBaseUrl = 'https://api.manitto.app/v1';
+  static const String productionBaseUrl = 'https://tomanito-backend.onrender.com/v1';
   static const String developmentBaseUrl = 'https://dev-api.manitto.app/v1';
   static const String localBaseUrl = 'http://localhost:8080/v1';
 
   /// 앱 기본 Base URL (Production)
-  static const String baseUrl = localBaseUrl;
+  static const String baseUrl = productionBaseUrl;
 
   // ── Auth ────────────────────────────────────────────────────────────────
   static const String authRegister = '/auth/register';
