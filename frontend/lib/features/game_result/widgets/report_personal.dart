@@ -65,9 +65,14 @@ class ReportPersonal extends StatelessWidget {
                     border: AppTheme.handDrawnBorder(color: AppColors.COrange),
                   ),
                   child: const Center(
-                    child: TomatoMascot(
-                      variant: TomatoMascotVariant.embarrassed,
-                      size: 132,
+                    child: Image.asset(
+                      'assets${report.typeImageUrl}',
+                      width: 132,
+                      height: 132,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Text('이미지 준비중', style: TextStyle(color: Colors.grey));
+                      },
                     ),
                   ),
                 ),
