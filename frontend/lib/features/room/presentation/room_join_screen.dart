@@ -11,6 +11,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/doodle_background.dart';
@@ -70,6 +71,7 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
           roomId: widget.roomId,
           missionCount: widget.missionCount,
           userName: userName,
+          invitationCode: widget.invitationCode,
         ),
       );
     } on ApiException catch (e, s) {
@@ -80,6 +82,7 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
             roomId: widget.roomId,
             missionCount: widget.missionCount,
             userName: userName,
+            invitationCode: widget.invitationCode,
           ),
         );
         return;
@@ -104,7 +107,11 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.CBackground,
-      appBar: AppBar(title: const Text('방 입장')),
+      appBar: AppBar(
+        title: const Text('방 입장'),
+        leading: const AppBackButton(),
+        automaticallyImplyLeading: false,
+      ),
       body: DoodleBackground(
         child: SafeArea(
           child: Padding(

@@ -216,9 +216,9 @@ class AppTheme {
 
       // 일반 안내 — ErrorResponse는 [errorSnackBarDecoration] 사용 권장
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.CTextPrimary,
+        backgroundColor: Colors.white,
         contentTextStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.CBackground,
+          color: AppColors.CTextPrimary,
         ),
         behavior: SnackBarBehavior.floating,
         elevation: 0,

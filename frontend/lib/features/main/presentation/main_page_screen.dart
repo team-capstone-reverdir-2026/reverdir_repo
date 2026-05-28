@@ -13,6 +13,7 @@ import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../../core/widgets/logout_button.dart';
 import '../../main/data/main_repository.dart';
+import '../../room/data/room_invite_code_cache.dart';
 import 'widgets/invite_code_dialog.dart';
 
 class MainPageScreen extends StatefulWidget {
@@ -133,6 +134,7 @@ class _MainPageScreenState extends State<MainPageScreen> {
         );
         return;
       }
+      RoomInviteCodeCache.save(preview.roomId, code);
       context.push(
         AppRoutes.roomJoinProfilePath(
           roomId: preview.roomId,

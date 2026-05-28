@@ -7,6 +7,8 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/error_handler.dart';
 import '../../../core/router/app_routes.dart';
+import '../../../core/widgets/app_back_button.dart';
+import '../data/room_invite_code_cache.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
@@ -20,11 +22,13 @@ class MissionInputScreen extends StatefulWidget {
     required this.roomId,
     required this.missionCount,
     required this.userName,
+    this.invitationCode = '',
   });
 
   final String roomId;
   final int missionCount;
   final String userName;
+  final String invitationCode;
 
   @override
   State<MissionInputScreen> createState() => _MissionInputScreenState();
@@ -113,10 +117,16 @@ class _MissionInputScreenState extends State<MissionInputScreen> {
       if (status == 'ENDED') {
         context.go(AppRoutes.roomResultsPath(widget.roomId));
       } else {
-        final encodedName = Uri.encodeComponent(widget.userName);
+        final invite = widget.invitationCode.trim();
+        if (invite.isNotEmpty) {
+          RoomInviteCodeCache.save(widget.roomId, invite);
+        }
         context.go(
-          '${AppRoutes.roomDetailPath(widget.roomId)}'
-          '?displayName=$encodedName&r=${DateTime.now().millisecondsSinceEpoch}',
+          AppRoutes.roomDetailPath(
+            widget.roomId,
+            displayName: widget.userName,
+            inviteCode: invite.isNotEmpty ? invite : null,
+          ),
         );
       }
     } on ApiException catch (e, s) {
@@ -140,7 +150,11 @@ class _MissionInputScreenState extends State<MissionInputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.CBackground,
-      appBar: AppBar(title: const Text('미션 입력')),
+      appBar: AppBar(
+        title: const Text('미션 입력'),
+        leading: const AppBackButton(),
+        automaticallyImplyLeading: false,
+      ),
       body: DoodleBackground(
         child: SafeArea(
           child: Padding(
