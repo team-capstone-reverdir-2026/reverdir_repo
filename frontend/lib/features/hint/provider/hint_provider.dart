@@ -1,3 +1,5 @@
+import '../../../core/utils/json_parse.dart';
+
 /// GET /rooms/{roomId}/questions/today — TodayQuestion UI 모델.
 class TodayQuestionViewData {
   const TodayQuestionViewData({
@@ -48,18 +50,22 @@ class TodayQuestionViewData {
   }
 
   factory TodayQuestionViewData.fromApiJson(Map<String, dynamic> json) {
-    final my = json['myAnswer'] as Map<String, dynamic>?;
-    final manito = json['manitoAnswer'] as Map<String, dynamic>?;
+    final my = parseJsonMap(json['myAnswer']);
+    final manito = parseJsonMap(json['manitoAnswer']);
 
     return TodayQuestionViewData(
-      questionId: json['questionId'] as String? ?? '',
-      content: json['content'] as String? ?? '',
-      date: json['date'] as String? ?? '',
-      myAnswered: my?['answered'] as bool? ?? false,
-      myAnswerContent: my?['content'] as String?,
-      manittoAnswered: manito?['answered'] as bool? ?? false,
-      manittoAnswerContent: manito?['content'] as String?,
-      manittoVisibleToMe: manito?['visibleToMe'] as bool? ?? false,
+      questionId: parseJsonString(json['questionId']),
+      content: parseJsonString(json['content']),
+      date: parseJsonString(json['date']),
+      myAnswered: parseJsonBool(my?['answered']),
+      myAnswerContent: my?['content'] == null
+          ? null
+          : parseJsonString(my?['content']),
+      manittoAnswered: parseJsonBool(manito?['answered']),
+      manittoAnswerContent: manito?['content'] == null
+          ? null
+          : parseJsonString(manito?['content']),
+      manittoVisibleToMe: parseJsonBool(manito?['visibleToMe']),
     );
   }
 

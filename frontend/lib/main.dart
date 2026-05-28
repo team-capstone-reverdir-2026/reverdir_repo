@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reverdir/core/debug/agent_debug_log.dart';
 import 'package:reverdir/core/network/dio_client.dart';
 import 'package:reverdir/core/router/app_router.dart';
 import 'package:reverdir/core/storage/secure_storage_service.dart';
@@ -24,10 +25,26 @@ class MyApp extends StatelessWidget {
       routerConfig: appRouter,
       theme: AppTheme.light,
       builder: (context, child) {
+        // #region agent log
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          AgentDebugLog.log(
+            location: 'main.dart:builder',
+            message: 'App builder post-frame',
+            hypothesisId: 'H2,H3',
+            data: {
+              'navigatorCanPop': Navigator.canPop(context),
+              'childIsNull': child == null,
+            },
+          );
+        });
+        // #endregion
+
         return Stack(
           fit: StackFit.expand,
           children: [
-            const ColoredBox(color: AppColors.CBackground),
+            const IgnorePointer(
+              child: ColoredBox(color: AppColors.CBackground),
+            ),
             const DoodlePaintLayer(opacity: 0.36),
             Center(
               child: ConstrainedBox(

@@ -1,6 +1,7 @@
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_enums.dart';
+import '../../../core/utils/json_parse.dart';
 
 class LetterNoteData {
   const LetterNoteData({
@@ -18,12 +19,13 @@ class LetterNoteData {
   final NoteDirection direction;
 
   factory LetterNoteData.fromJson(Map<String, dynamic> json) => LetterNoteData(
-        id: json['id'] as String? ?? '',
-        content: json['content'] as String? ?? '',
-        isRead: json['isRead'] as bool? ?? false,
-        sentAt: DateTime.tryParse(json['sentAt'] as String? ?? '') ?? DateTime.now(),
-        direction:
-            NoteDirection.tryParse(json['direction'] as String?) ?? NoteDirection.sent,
+        id: parseJsonString(json['id']),
+        content: parseJsonString(json['content']),
+        isRead: parseJsonBool(json['isRead']),
+        sentAt: DateTime.tryParse(parseJsonString(json['sentAt'])) ??
+            DateTime.now(),
+        direction: NoteDirection.tryParse(parseJsonString(json['direction'])) ??
+            NoteDirection.sent,
       );
 }
 
@@ -35,16 +37,14 @@ class LetterRepository {
   Future<List<LetterNoteData>> fetchSent(String roomId) async {
     final res =
         await _api.get<Map<String, dynamic>>(ApiEndpoints.roomNotesSent(roomId));
-    final list = (res.data?['notes'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>();
+    final list = parseJsonMapList(res.data?['notes']);
     return list.map(LetterNoteData.fromJson).toList();
   }
 
   Future<List<LetterNoteData>> fetchReceived(String roomId) async {
     final res =
         await _api.get<Map<String, dynamic>>(ApiEndpoints.roomNotesReceived(roomId));
-    final list = (res.data?['notes'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>();
+    final list = parseJsonMapList(res.data?['notes']);
     return list.map(LetterNoteData.fromJson).toList();
   }
 
