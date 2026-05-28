@@ -100,7 +100,7 @@ public class GameService {
         for (Participant participant : participants) {
             long missionCount = missionRepository.countByParticipantId(participant.getId());
             if (missionCount < room.getMissionCount()) {
-                throw new CustomException(ErrorCode.NOT_ENOUGH_PARTICIPANTS);
+                throw new CustomException(ErrorCode.NOT_ENOUGH_MISSION);
             }
         }
     }
