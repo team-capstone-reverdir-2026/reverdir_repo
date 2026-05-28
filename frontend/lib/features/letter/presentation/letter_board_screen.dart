@@ -6,7 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/washi_tape.dart';
-import '../../manitto_game/data/mock_game_service.dart';
+import '../data/letter_repository.dart';
 
 class LetterBoardScreen extends StatefulWidget {
   const LetterBoardScreen({
@@ -23,12 +23,18 @@ class LetterBoardScreen extends StatefulWidget {
 class _LetterBoardScreenState extends State<LetterBoardScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  final _repo = const LetterRepository();
   DateTimeRange? _range;
+  bool _loading = true;
+  String? _error;
+  List<LetterNoteData> _sent = const [];
+  List<LetterNoteData> _received = const [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _load();
   }
 
   @override
@@ -39,8 +45,6 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final service = MockGameService.instance;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('쪽지함'),
@@ -81,23 +85,29 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
               ),
             ),
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _LetterList(
-                    notes: _filter(service.letters, NoteDirection.received),
-                    onOpen: (note) {
-                      service.markLetterRead(note.id);
-                      _showNoteDetail(note.copyWith(isRead: true));
-                      setState(() {});
-                    },
-                  ),
-                  _LetterList(
-                    notes: _filter(service.letters, NoteDirection.sent),
-                    onOpen: _showNoteDetail,
-                  ),
-                ],
-              ),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(child: Text(_error!, style: AppTextStyles.bodyMedium))
+                      : TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _LetterList(
+                              notes: _filter(_received, NoteDirection.received),
+                              onOpen: (note) async {
+                                try {
+                                  await _repo.markRead(widget.roomId, note.id);
+                                  await _load();
+                                } catch (_) {}
+                                _showNoteDetail(note);
+                              },
+                            ),
+                            _LetterList(
+                              notes: _filter(_sent, NoteDirection.sent),
+                              onOpen: _showNoteDetail,
+                            ),
+                          ],
+                        ),
             ),
           ],
         ),
@@ -105,7 +115,10 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
     );
   }
 
-  List<LetterNote> _filter(List<LetterNote> notes, NoteDirection direction) {
+  List<LetterNoteData> _filter(
+    List<LetterNoteData> notes,
+    NoteDirection direction,
+  ) {
     final filtered = notes.where((note) {
       if (note.direction != direction) return false;
       final range = _range;
@@ -117,7 +130,7 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
     return filtered;
   }
 
-  void _showNoteDetail(LetterNote note) {
+  void _showNoteDetail(LetterNoteData note) {
     showDialog<void>(
       context: context,
       builder: (context) {
@@ -129,6 +142,27 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
       },
     );
   }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final sent = await _repo.fetchSent(widget.roomId);
+      final received = await _repo.fetchReceived(widget.roomId);
+      if (!mounted) return;
+      setState(() {
+        _sent = sent;
+        _received = received;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'API 호출/응답 문제: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 }
 
 class _LetterList extends StatelessWidget {
@@ -137,8 +171,8 @@ class _LetterList extends StatelessWidget {
     required this.onOpen,
   });
 
-  final List<LetterNote> notes;
-  final ValueChanged<LetterNote> onOpen;
+  final List<LetterNoteData> notes;
+  final ValueChanged<LetterNoteData> onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +237,7 @@ class _PaperNote extends StatelessWidget {
     required this.color,
   });
 
-  final LetterNote note;
+  final LetterNoteData note;
   final Color color;
 
   @override

@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/tomato_mascot.dart';
-import '../../manitto_game/data/mock_game_service.dart';
+import '../../manitto_game/data/game_repository.dart';
 
 class ReportPersonal extends StatelessWidget {
   const ReportPersonal({
@@ -64,10 +64,15 @@ class ReportPersonal extends StatelessWidget {
                     borderRadius: BorderRadius.circular(42),
                     border: AppTheme.handDrawnBorder(color: AppColors.COrange),
                   ),
-                  child: const Center(
-                    child: TomatoMascot(
-                      variant: TomatoMascotVariant.embarrassed,
-                      size: 132,
+                  child: Center(
+                    child: Image.asset(
+                      'assets${report.typeImageUrl}',
+                      width: 132,
+                      height: 132,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Text('이미지 준비중', style: TextStyle(color: Colors.grey));
+                      },
                     ),
                   ),
                 ),

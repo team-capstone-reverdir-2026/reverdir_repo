@@ -8,17 +8,37 @@ import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/tomato_mascot.dart';
 import '../../../../core/widgets/washi_tape.dart';
-import '../../data/mock_game_service.dart';
+import '../../data/game_repository.dart';
 
 class PreStartView extends StatefulWidget {
   const PreStartView({
     super.key,
-    required this.service,
+    required this.roomName,
+    required this.roomDescription,
+    required this.inviteCode,
+    required this.maxMissionCount,
+    required this.isHost,
+    required this.participants,
+    required this.myMissions,
     required this.onStart,
+    required this.onAddMission,
+    required this.onRecommend,
+    required this.onUpdateMission,
+    required this.onDeleteMission,
   });
 
-  final MockGameService service;
-  final VoidCallback onStart;
+  final String roomName;
+  final String roomDescription;
+  final String inviteCode;
+  final int maxMissionCount;
+  final bool isHost;
+  final List<ParticipantData> participants;
+  final List<EditableMission> myMissions;
+  final Future<void> Function() onStart;
+  final Future<void> Function(String content) onAddMission;
+  final Future<String> Function() onRecommend;
+  final Future<void> Function(String missionId, String content) onUpdateMission;
+  final Future<void> Function(String missionId) onDeleteMission;
 
   @override
   State<PreStartView> createState() => _PreStartViewState();
@@ -26,6 +46,7 @@ class PreStartView extends StatefulWidget {
 
 class _PreStartViewState extends State<PreStartView> {
   final _missionController = TextEditingController();
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -35,75 +56,108 @@ class _PreStartViewState extends State<PreStartView> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: widget.service,
-      builder: (context, _) {
-        return Stack(
+    return Stack(
+      children: [
+        ListView(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            54,
+            20,
+            widget.isHost ? 150 : 40,
+          ),
           children: [
-            ListView(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                54,
-                20,
-                widget.service.isHost ? 150 : 40,
-              ),
-              children: [
-                _RoomIntro(service: widget.service),
-                const SizedBox(height: 22),
-                _ParticipantsCard(service: widget.service),
-                const SizedBox(height: 22),
-                _MissionDraftCard(
-                  service: widget.service,
-                  controller: _missionController,
-                  onAdd: _addMission,
-                  onRecommend: _recommendMission,
-                ),
-                const SizedBox(height: 24),
-                if (!widget.service.isHost)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.CBrown.withValues(alpha: 0.25),
-                      borderRadius: AppTheme.borderRadius,
-                    ),
-                    child: Text(
-                      '방장이 게임을 시작할 때까지 기다려 주세요.',
-                      style: AppTextStyles.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-              ],
+            _RoomIntro(
+              roomName: widget.roomName,
+              roomDescription: widget.roomDescription,
+              inviteCode: widget.inviteCode,
             ),
-            if (widget.service.isHost)
-              _HostStartBottomBar(onStart: widget.onStart),
+            const SizedBox(height: 22),
+            _ParticipantsCard(
+              participants: widget.participants,
+              maxMissionCount: widget.maxMissionCount,
+            ),
+            const SizedBox(height: 22),
+            _MissionDraftCard(
+              maxMissionCount: widget.maxMissionCount,
+              myMissions: widget.myMissions,
+              controller: _missionController,
+              onAdd: _addMission,
+              onRecommend: _recommendMission,
+              onUpdateMission: widget.onUpdateMission,
+              onDeleteMission: widget.onDeleteMission,
+            ),
+            const SizedBox(height: 24),
+            if (!widget.isHost)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.CBrown.withValues(alpha: 0.25),
+                  borderRadius: AppTheme.borderRadius,
+                ),
+                child: Text(
+                  '방장이 게임을 시작할 때까지 기다려 주세요.',
+                  style: AppTextStyles.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+              ),
           ],
-        );
-      },
+        ),
+        if (widget.isHost)
+          _HostStartBottomBar(
+            onStart: _startGame,
+            disabled: _submitting,
+          ),
+      ],
     );
   }
 
-  void _addMission() {
-    final error = widget.service.addMyMission(_missionController.text);
-    if (error != null) {
-      context.showErrorSnackBar(error);
-      return;
+  Future<void> _startGame() async {
+    try {
+      setState(() => _submitting = true);
+      await widget.onStart();
+    } catch (e) {
+      if (!mounted) return;
+      context.showErrorSnackBar('API 호출/응답 문제: $e');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
-    _missionController.clear();
   }
 
-  void _recommendMission() {
-    final mission = widget.service.recommendMission();
-    _missionController
-      ..text = mission
-      ..selection = TextSelection.collapsed(offset: mission.length);
-    context.showSnackBar('추천 미션을 채워뒀어요!');
+  Future<void> _addMission() async {
+    final trimmed = _missionController.text.trim();
+    if (trimmed.isEmpty) {
+      context.showErrorSnackBar('미션 내용을 입력해 주세요.');
+      return;
+    }
+    try {
+      await widget.onAddMission(trimmed);
+      _missionController.clear();
+    } catch (e) {
+      if (!mounted) return;
+      context.showErrorSnackBar('API 호출/응답 문제: $e');
+    }
+  }
+
+  Future<void> _recommendMission() async {
+    try {
+      final mission = await widget.onRecommend();
+      _missionController
+        ..text = mission
+        ..selection = TextSelection.collapsed(offset: mission.length);
+      if (!mounted) return;
+      context.showSnackBar('추천 미션을 채워뒀어요!');
+    } catch (e) {
+      if (!mounted) return;
+      context.showErrorSnackBar('API 호출/응답 문제: $e');
+    }
   }
 }
 
 class _HostStartBottomBar extends StatelessWidget {
-  const _HostStartBottomBar({required this.onStart});
+  const _HostStartBottomBar({required this.onStart, required this.disabled});
 
   final VoidCallback onStart;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -132,8 +186,8 @@ class _HostStartBottomBar extends StatelessWidget {
           ),
         ),
         child: CustomButton(
-          label: '마니또 시작하기',
-          onPressed: onStart,
+          label: disabled ? '시작 중...' : '마니또 시작하기',
+          onPressed: disabled ? null : onStart,
           width: double.infinity,
         ),
       ),
@@ -142,9 +196,14 @@ class _HostStartBottomBar extends StatelessWidget {
 }
 
 class _RoomIntro extends StatelessWidget {
-  const _RoomIntro({required this.service});
-
-  final MockGameService service;
+  const _RoomIntro({
+    required this.roomName,
+    required this.roomDescription,
+    required this.inviteCode,
+  });
+  final String roomName;
+  final String roomDescription;
+  final String inviteCode;
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +232,7 @@ class _RoomIntro extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        service.roomName,
+                        roomName,
                         style: AppTextStyles.titleLarge,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -188,14 +247,14 @@ class _RoomIntro extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  service.roomDescription,
+                  roomDescription,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.CTextSecondary,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '초대 코드 ${service.inviteCode}',
+                  '초대 코드 $inviteCode',
                   style: AppTextStyles.statusBadge.copyWith(
                     color: AppColors.CRed,
                   ),
@@ -219,9 +278,12 @@ class _RoomIntro extends StatelessWidget {
 }
 
 class _ParticipantsCard extends StatelessWidget {
-  const _ParticipantsCard({required this.service});
-
-  final MockGameService service;
+  const _ParticipantsCard({
+    required this.participants,
+    required this.maxMissionCount,
+  });
+  final List<ParticipantData> participants;
+  final int maxMissionCount;
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +301,7 @@ class _ParticipantsCard extends StatelessWidget {
           children: [
             Text('참여자 미션 준비 현황', style: AppTextStyles.titleMedium),
             const SizedBox(height: 14),
-            ...service.participants.map(
+            ...participants.map(
               (p) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
@@ -268,7 +330,7 @@ class _ParticipantsCard extends StatelessWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: p.missionCount >= service.maxMissionCount
+                        color: p.missionCount >= maxMissionCount
                             ? AppColors.CGreen.withValues(alpha: 0.48)
                             : AppColors.CYellow.withValues(alpha: 0.60),
                         borderRadius: BorderRadius.circular(999),
@@ -278,7 +340,7 @@ class _ParticipantsCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        '${p.missionCount}/${service.maxMissionCount}개',
+                        '${p.missionCount}/$maxMissionCount개',
                         style: AppTextStyles.label,
                       ),
                     ),
@@ -295,16 +357,22 @@ class _ParticipantsCard extends StatelessWidget {
 
 class _MissionDraftCard extends StatelessWidget {
   const _MissionDraftCard({
-    required this.service,
+    required this.maxMissionCount,
+    required this.myMissions,
     required this.controller,
     required this.onAdd,
     required this.onRecommend,
+    required this.onUpdateMission,
+    required this.onDeleteMission,
   });
 
-  final MockGameService service;
+  final int maxMissionCount;
+  final List<EditableMission> myMissions;
   final TextEditingController controller;
-  final VoidCallback onAdd;
-  final VoidCallback onRecommend;
+  final Future<void> Function() onAdd;
+  final Future<void> Function() onRecommend;
+  final Future<void> Function(String missionId, String content) onUpdateMission;
+  final Future<void> Function(String missionId) onDeleteMission;
 
   @override
   Widget build(BuildContext context) {
@@ -326,20 +394,18 @@ class _MissionDraftCard extends StatelessWidget {
                 Text('나의 시작 전 미션', style: AppTextStyles.titleMedium),
                 const SizedBox(height: 8),
                 Text(
-                  '내가 작성한 미션만 보여요. 최대 ${service.maxMissionCount}개까지 가능!',
+                  '내가 작성한 미션만 보여요. 최대 $maxMissionCount개까지 가능!',
                   style: AppTextStyles.caption,
                 ),
                 const SizedBox(height: 14),
-                ...service.myPreStartMissions.map(
+                ...myMissions.map(
                   (mission) => _EditableMissionRow(
                     mission: mission,
-                    onChanged: (value) =>
-                        service.updateMyMission(mission.id, value),
-                    onDelete: () => service.deleteMyMission(mission.id),
+                    onChanged: (value) => onUpdateMission(mission.id, value),
+                    onDelete: () => onDeleteMission(mission.id),
                   ),
                 ),
-                if (service.myPreStartMissions.length <
-                    service.maxMissionCount) ...[
+                if (myMissions.length < maxMissionCount) ...[
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -356,7 +422,7 @@ class _MissionDraftCard extends StatelessWidget {
                         color: AppColors.CYellow.withValues(alpha: 0.58),
                         borderRadius: BorderRadius.circular(16),
                         child: InkWell(
-                          onTap: onRecommend,
+                          onTap: () => onRecommend(),
                           borderRadius: BorderRadius.circular(16),
                           child: Container(
                             width: 52,
@@ -380,7 +446,7 @@ class _MissionDraftCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   CustomButton(
                     label: '미션 추가하기',
-                    onPressed: onAdd,
+                    onPressed: () => onAdd(),
                     variant: CustomButtonVariant.outlined,
                     width: double.infinity,
                   ),
@@ -411,8 +477,8 @@ class _EditableMissionRow extends StatefulWidget {
   });
 
   final EditableMission mission;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onDelete;
+  final Future<void> Function(String value) onChanged;
+  final Future<void> Function() onDelete;
 
   @override
   State<_EditableMissionRow> createState() => _EditableMissionRowState();
@@ -447,7 +513,7 @@ class _EditableMissionRowState extends State<_EditableMissionRow> {
             ),
           ),
           IconButton(
-            onPressed: widget.onDelete,
+            onPressed: () => widget.onDelete(),
             icon: const Icon(Icons.close_rounded),
             color: AppColors.CRed,
           ),

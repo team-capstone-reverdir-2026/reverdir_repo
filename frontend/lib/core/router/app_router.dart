@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/register_screen.dart';
 import '../../features/demo_set_screen.dart';
 import '../../features/game_result/presentation/result_screen.dart';
 import '../../features/hint/presentation/hint_collect_screen.dart';
 import '../../features/letter/presentation/letter_board_screen.dart';
 import '../../features/letter/presentation/letter_send_screen.dart';
+import '../../features/main/presentation/main_page_screen.dart';
+import '../../features/main/presentation/room_join_preview_screen.dart';
 import '../../features/manitto_game/presentation/game_main_screen.dart';
+import '../../features/room/presentation/mission_input_screen.dart';
+import '../../features/room/presentation/room_create_screen.dart';
+import '../../features/room/presentation/room_join_screen.dart';
 import '../storage/secure_storage_service.dart';
 import 'app_routes.dart';
 
@@ -22,30 +29,64 @@ import 'app_routes.dart';
 /// runApp(MaterialApp.router(routerConfig: appRouter, theme: AppTheme.light));
 /// ```
 final GoRouter appRouter = GoRouter(
-  //initialLocation: AppRoutes.login,
-  initialLocation: '/room/test-room-123', // 임시 방 상세 화면
+  initialLocation: AppRoutes.login,
   //debugLogDiagnostics: true,
   redirect: _authRedirect,
   routes: [
     GoRoute(
       path: AppRoutes.login,
-      builder: (_, __) => const _PlaceholderScreen(title: '로그인'),
+      builder: (_, __) => const LoginScreen(),
     ),
     GoRoute(
       path: AppRoutes.register,
-      builder: (_, __) => const _PlaceholderScreen(title: '회원가입'),
+      builder: (_, __) => const RegisterScreen(),
     ),
     GoRoute(
       path: AppRoutes.home,
-      builder: (_, __) => const _PlaceholderScreen(title: '방 목록'),
+      builder: (_, __) => const MainPageScreen(),
     ),
     GoRoute(
       path: AppRoutes.roomCreate,
-      builder: (_, __) => const _PlaceholderScreen(title: '방 만들기'),
+      builder: (_, __) => const RoomCreateScreen(),
     ),
     GoRoute(
       path: AppRoutes.roomJoin,
-      builder: (_, __) => const _PlaceholderScreen(title: '초대 코드 입장'),
+      builder: (_, state) {
+        final code = state.uri.queryParameters['code'] ?? '';
+        return RoomJoinPreviewScreen(inviteCode: code);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.roomJoinProfile,
+      builder: (_, state) {
+        final code = state.uri.queryParameters['code'] ?? '';
+        final missionCount = int.tryParse(
+              state.uri.queryParameters['missionCount'] ?? '',
+            ) ??
+            1;
+        return RoomJoinScreen(
+          invitationCode: code,
+          missionCount: missionCount,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.roomJoinMissions,
+      builder: (_, state) {
+        final code = state.uri.queryParameters['code'] ?? '';
+        final missionCount = int.tryParse(
+              state.uri.queryParameters['missionCount'] ?? '',
+            ) ??
+            1;
+        final userName = Uri.decodeComponent(
+          state.uri.queryParameters['userName'] ?? '',
+        );
+        return MissionInputScreen(
+          invitationCode: code,
+          missionCount: missionCount,
+          userName: userName,
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.roomDetail,
@@ -109,19 +150,18 @@ final GoRouter appRouter = GoRouter(
 /// TODO: 온보딩 미완료 시 [LocalStorageService.isOnboardingCompleted] 분기 추가
 /// TODO: refresh 실패 후 login 외 public 경로 화이트리스트 정교화
 Future<String?> _authRedirect(BuildContext context, GoRouterState state) async {
-  // final isLoggedIn = await SecureStorageService.instance.hasAccessToken();
-  // final location = state.matchedLocation;
+  final isLoggedIn = await SecureStorageService.instance.hasAccessToken();
+  final location = state.matchedLocation;
+  final isAuthRoute =
+      location == AppRoutes.login || location == AppRoutes.register;
 
-  // final isAuthRoute =
-  //     location == AppRoutes.login || location == AppRoutes.register;
+  if (!isLoggedIn && !isAuthRoute) {
+    return AppRoutes.login;
+  }
 
-  // if (!isLoggedIn && !isAuthRoute) {
-  //   return AppRoutes.login;
-  // }
-
-  // if (isLoggedIn && isAuthRoute) {
-  //   return AppRoutes.home;
-  // }
+  if (isLoggedIn && isAuthRoute) {
+    return AppRoutes.home;
+  }
 
   return null;
 }

@@ -6,10 +6,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../../core/widgets/washi_tape.dart';
-import '../../manitto_game/data/mock_game_service.dart';
+import '../../manitto_game/data/game_repository.dart';
 import 'widgets/hint_blur.dart';
 
-class HintCollectScreen extends StatelessWidget {
+class HintCollectScreen extends StatefulWidget {
   const HintCollectScreen({
     super.key,
     required this.roomId,
@@ -18,20 +18,53 @@ class HintCollectScreen extends StatelessWidget {
   final String roomId;
 
   @override
-  Widget build(BuildContext context) {
-    final service = MockGameService.instance;
-    final history = [...service.questionHistory]
-      ..sort((a, b) => b.date.compareTo(a.date));
+  State<HintCollectScreen> createState() => _HintCollectScreenState();
+}
 
+class _HintCollectScreenState extends State<HintCollectScreen> {
+  final _repo = const GameRepository();
+  bool _loading = true;
+  String? _error;
+  List<QuestionHistoryData> _history = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final history = await _repo.fetchQuestionHistory(widget.roomId);
+      if (!mounted) return;
+      setState(() => _history = history..sort((a, b) => b.date.compareTo(a.date)));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'API 호출/응답 문제: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('힌트 답변 모음')),
       body: DoodleBackground(
-        child: ListView.separated(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? Center(child: Text(_error!, style: AppTextStyles.bodyMedium))
+                : ListView.separated(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-          itemCount: history.length,
+          itemCount: _history.length,
           separatorBuilder: (_, __) => const SizedBox(height: 18),
           itemBuilder: (context, index) {
-            final item = history[index];
+            final item = _history[index];
             return Transform.rotate(
               angle: index.isEven ? -0.014 : 0.014,
               child: Stack(
