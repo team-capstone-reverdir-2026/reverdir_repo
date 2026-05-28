@@ -35,7 +35,7 @@ class InProgressView extends StatelessWidget {
   final List<String> participantNames;
   final TodayQuestionViewData todayQuestion;
   final MissionProvider missionProvider;
-  final ValueChanged<String>? onAnswerSubmitted;
+  final Future<void> Function(String)? onAnswerSubmitted;
 
   /// GET /rooms/{roomId}/my-manitti — null이면 비밀 UI
   final String? myManittiDisplayName;

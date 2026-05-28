@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/api_enums.dart';
 import '../../../core/network/error_handler.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -123,7 +124,7 @@ class _RoomCreateScreenState extends State<RoomCreateScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(snackBarMessage)),
+        SnackBar(content: Text(snackBarMessage)),
       );
     } finally {
       if (mounted) {
