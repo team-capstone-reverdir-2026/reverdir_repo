@@ -7,7 +7,6 @@
 ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Firebase Cloud Messaging](https://img.shields.io/badge/FCM-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Kakao Link](https://img.shields.io/badge/Kakao_Link-FFCD00?style=for-the-badge&logo=kakao&logoColor=black)
 ![OpenAI API](https://img.shields.io/badge/OpenAI_API-412991?style=for-the-badge&logo=openai&logoColor=white)
@@ -15,9 +14,9 @@
 <br>
 
 ## 🚀 Overview
-또마니또(Tto-Manito)는 오프라인에서 수작업으로 진행되던 전통적인 '마니또(Secret Santa)' 이벤트를 디지털화하고, AI 기반의 콘텐츠와 게임화(Gamification) 요소를 결합해 확장한 모바일 서비스입니다.
+또마니또(To-Manito)는 오프라인에서 수작업으로 진행되던 전통적인 '마니또(Secret Santa)' 이벤트를 디지털화하고, AI 기반의 콘텐츠와 게임화(Gamification) 요소를 결합해 확장한 모바일 서비스입니다.
 
-단순한 익명 매칭과 결과 발표를 넘어, 그룹의 성격에 맞춘 **AI 맞춤형 미션/힌트 생성**, 실시간 채팅, 활동량에 따른 실시간 랭킹 보드, 그리고 활동 종료 후 제공되는 **AI 마니또 캐릭터 리포트**를 통해 참여자들에게 지속적인 동기를 부여하고 새로운 상호작용 경험을 제공합니다.
+단순한 익명 매칭과 결과 발표를 넘어, 그룹의 성격에 맞춘 AI 맞춤형 미션, 실시간 채팅, 활동량에 따른 실시간 랭킹 보드, 그리고 활동 종료 후 제공되는 **AI 마니또 캐릭터 리포트**를 통해 참여자들에게 지속적인 동기를 부여하고 새로운 상호작용 경험을 제공합니다.
 
 <br>
 
@@ -43,7 +42,7 @@
   * 서버 사이드 무작위 익명 매칭
 * **🖥 AI 맞춤형 환경 구성 (Contextual Generator)**
   * 방 생성 시 입력된 메타데이터(모임 성격)를 AI가 분석
-  * 해당 그룹 특성에 최적화된 추천 미션 및 힌트 템플릿 자동 생성
+  * 해당 그룹 특성에 최적화된 추천 미션 템플릿 자동 생성
 * **📋 게임화된 상호작용 (Gamified Interaction)**
   * 단방향/역방향 익명 비밀 쪽지 및 선물 기록 시스템
   * 힌트 열람 및 실시간 마니또로 의심되는 상대 설정 기능
@@ -65,35 +64,27 @@
 ## 🛠 Tech Stack
 
 ### Backend
-* **Language & Framework:** Java 17, Spring Boot
-* **Database:** PostgreSQL (RDBMS)
-* **API & External Services:** OpenAI API (AI 마니또 페르소나 분석 및 텍스트 생성)
-  * Firebase Cloud Messaging / FCM (실시간 푸시 알림)
-  * Kakao Link API (카카오톡 초대 코드 공유)
-* **Version Control:** Git & GitHub
+* Java 17
+* Spring Boot 4.0.6
+
+### Database
+* MySQL 8.0
 
 ### Frontend
-* **Framework:** Flutter (Dart)
+* Flutter (버전 추가)
+* Dart (버전 추가)
+
+### External Services
+* OpenAI API
+* kakao Link API
+* Firebase Cloud Messaging (FCM)
 
 <br>
 
-## 🚀 Getting Started
+## Project Structure
 
-### Prerequisites
-* JDK 17+
-* Flutter SDK 3.x+
-* PostgreSQL 14+
-* Firebase 연동 파일 (`google-services.json`)
-* Kakao API Key 및 OpenAI API Key
+<br>
 
-### Backend Installation
-```bash
-# 1. Repository Clone
-$git clone [https://github.com/Reverdir/Tto-Manito.git$](https://github.com/Reverdir/Tto-Manito.git$) cd Tto-Manito/backend
-
-# 2. application.yml 환경변수 설정
-
-# 3. Spring Boot 실행
-$./gradlew build$ ./gradlew bootRun
+## How to Run
 
 <br>
