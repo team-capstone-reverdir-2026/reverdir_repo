@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/extensions.dart';
+import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../data/letter_repository.dart';
@@ -38,7 +39,11 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('쪽지 쓰기')),
+      appBar: AppBar(
+        title: const Text('쪽지 쓰기'),
+        leading: const AppBackButton(),
+        automaticallyImplyLeading: false,
+      ),
       body: DoodleBackground(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -57,35 +62,18 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
                       ),
                     ),
                     Positioned.fill(
-                      top: -6,
-                      right: 4,
                       child: Container(
-                        padding: const EdgeInsets.fromLTRB(46, 22, 20, 18),
+                        padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.CIvory,
-                              AppColors.CYellow.withValues(alpha: 0.14),
-                              AppColors.CIvory.withValues(alpha: 0.96),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(30),
+                          color: AppColors.CIvory,
+                          borderRadius: BorderRadius.circular(20),
                           border:
                               AppTheme.handDrawnBorder(color: AppColors.CBrown),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.CBrown.withValues(alpha: 0.20),
-                              blurRadius: 14,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
                         ),
                         child: CustomPaint(
                           painter: _LinedPaperPainter(),
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 6, 8, 8),
+                            padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
                             child: TextField(
                               controller: _controller,
                               enabled: !_submitting,
@@ -121,28 +109,6 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
                                   height:
                                       _notebookLineHeight / _notebookFontSize,
                                 ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 18,
-                      top: 28,
-                      bottom: 28,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(
-                          7,
-                          (_) => Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: AppColors.CBackground,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.CBrown.withValues(alpha: 0.45),
                               ),
                             ),
                           ),
@@ -190,30 +156,21 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
 class _LinedPaperPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final texturePaint = Paint()
-      ..color = AppColors.CBrown.withValues(alpha: 0.045)
-      ..style = PaintingStyle.fill;
-    for (var x = 4.0; x < size.width; x += 22) {
-      for (var y = 8.0; y < size.height; y += 26) {
-        canvas.drawCircle(Offset(x, y), 0.8, texturePaint);
-      }
-    }
-
     final marginPaint = Paint()
-      ..color = AppColors.CRed.withValues(alpha: 0.30)
-      ..strokeWidth = 1.2;
+      ..color = AppColors.CRed.withValues(alpha: 0.22)
+      ..strokeWidth = 1;
     canvas.drawLine(
-      const Offset(10, 0),
-      Offset(10, size.height),
+      const Offset(14, 0),
+      Offset(14, size.height),
       marginPaint,
     );
 
-    final paint = Paint()
-      ..color = AppColors.CSkyBlue.withValues(alpha: 0.34)
+    final linePaint = Paint()
+      ..color = AppColors.CBrown.withValues(alpha: 0.14)
       ..strokeWidth = 1;
 
     for (var y = 29.0; y < size.height; y += _notebookLineHeight) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
     }
   }
 

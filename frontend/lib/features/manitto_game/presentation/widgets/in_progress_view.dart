@@ -88,21 +88,14 @@ class InProgressView extends StatelessWidget {
   void _showParticipantsSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.CIvory,
+      isScrollControlled: true,
       builder: (ctx) {
         return Container(
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.CSkyBlue.withValues(alpha: 0.32),
-                AppColors.CIvory,
-                AppColors.CYellow.withValues(alpha: 0.30),
-              ],
-            ),
+            color: AppColors.CIvory,
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(AppTheme.cornerRadius),
               bottom: Radius.circular(AppTheme.cornerRadius),

@@ -35,9 +35,13 @@ class ReportReveal extends StatelessWidget {
             border: AppTheme.handDrawnBorder(color: AppColors.CSkyBlue),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text('전체 결과 관계도', style: AppTextStyles.titleMedium),
+              Text(
+                '전체 결과 관계도',
+                style: AppTextStyles.titleMedium,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 14),
               _ChainView(chain: chain),
             ],
@@ -123,7 +127,7 @@ class _ChainView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         for (final link in chain)
           Padding(
@@ -142,12 +146,14 @@ class _ChainLinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+    return Center(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
           _NameChip(
             label: link.manitto.displayName,
             backgroundColor: AppColors.CSkyBlue.withValues(alpha: 0.35),
@@ -164,7 +170,8 @@ class _ChainLinkRow extends StatelessWidget {
             label: link.manitti.displayName,
             backgroundColor: AppColors.CPink.withValues(alpha: 0.35),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

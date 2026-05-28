@@ -1,11 +1,9 @@
-import 'dart:math' as math;
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/network/error_handler.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class RoomDateTimePicker extends StatefulWidget {
   const RoomDateTimePicker({
@@ -21,8 +19,6 @@ class RoomDateTimePicker extends StatefulWidget {
   final TimeOfDay? selectedTime;
   final ValueChanged<DateTime> onDateSelected;
   final ValueChanged<TimeOfDay> onTimeSelected;
-
-  /// 부모에서 실제 API 호출로 동기화할 때 사용합니다.
   final Future<void> Function(DateTime date, TimeOfDay time)? onSyncToServer;
 
   @override
@@ -33,13 +29,7 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
   String? _errorText;
 
   DateTime get _safeDate => widget.selectedDate ?? DateTime.now();
-  TimeOfDay get _safeTime => widget.selectedTime ?? TimeOfDay.now();
-
-  String _dateLabel(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
-
-  String _timeLabel(TimeOfDay t) =>
-      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  TimeOfDay get _safeTime => widget.selectedTime ?? const TimeOfDay(hour: 18, minute: 0);
 
   Future<void> _syncToServerIfNeeded() async {
     if (widget.onSyncToServer == null) return;
@@ -55,78 +45,63 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
     }
   }
 
-  Future<void> _openDatePickerPopup(BuildContext context) async {
-    var tempDate = _safeDate;
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (context) => _PickerPopupFrame(
-        title: 'Due Date',
-        child: CupertinoDatePicker(
-          mode: CupertinoDatePickerMode.date,
-          initialDateTime: tempDate,
-          minimumDate: DateTime.now().subtract(const Duration(days: 1)),
-          maximumDate: DateTime.now().add(const Duration(days: 3650)),
-          onDateTimeChanged: (picked) => tempDate = picked,
-        ),
-        onConfirm: () async {
-          widget.onDateSelected(tempDate);
-          await _syncToServerIfNeeded();
-          if (mounted) Navigator.of(context).pop();
-        },
-      ),
-    );
-  }
-
-  Future<void> _openTimePickerPopup(BuildContext context) async {
-    final initial = DateTime(
-      2000,
-      1,
-      1,
-      _safeTime.hour,
-      _safeTime.minute,
-    );
-    var temp = initial;
-
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (context) => _PickerPopupFrame(
-        title: 'Due Time',
-        child: CupertinoDatePicker(
-          mode: CupertinoDatePickerMode.time,
-          use24hFormat: true,
-          minuteInterval: 1,
-          initialDateTime: temp,
-          onDateTimeChanged: (picked) => temp = picked,
-        ),
-        onConfirm: () async {
-          widget.onTimeSelected(TimeOfDay(hour: temp.hour, minute: temp.minute));
-          await _syncToServerIfNeeded();
-          if (mounted) Navigator.of(context).pop();
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final firstDate = DateTime.now().subtract(const Duration(days: 1));
+    final lastDate = DateTime.now().add(const Duration(days: 3650));
+
+    final datePanel = _PickerPanel(
+      title: '종료 일자',
+      accent: AppColors.CYellow,
+      child: SizedBox(
+        height: 300,
+        child: CalendarDatePicker(
+          initialDate: _safeDate,
+          firstDate: firstDate,
+          lastDate: lastDate,
+          onDateChanged: (date) {
+            widget.onDateSelected(date);
+            _syncToServerIfNeeded();
+          },
+        ),
+      ),
+    );
+
+    final timePanel = _PickerPanel(
+      title: '종료 시각',
+      accent: AppColors.CSkyBlue,
+      child: _TimeWheelPicker(
+        time: _safeTime,
+        onChanged: (time) {
+          widget.onTimeSelected(time);
+          _syncToServerIfNeeded();
+        },
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _TiltedKitschButton(
-              label: '날짜 ${_dateLabel(_safeDate)}',
-              color: AppColors.CYellow.withValues(alpha: 0.6),
-              onTap: () => _openDatePickerPopup(context),
-            ),
-            _TiltedKitschButton(
-              label: '시간 ${_timeLabel(_safeTime)}',
-              color: AppColors.CSkyBlue.withValues(alpha: 0.6),
-              onTap: () => _openTimePickerPopup(context),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 520) {
+              return Column(
+                children: [
+                  datePanel,
+                  const SizedBox(height: 12),
+                  timePanel,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: datePanel),
+                const SizedBox(width: 12),
+                Expanded(child: timePanel),
+              ],
+            );
+          },
         ),
         if (_errorText != null) ...[
           const SizedBox(height: 8),
@@ -140,85 +115,246 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
   }
 }
 
-class _TiltedKitschButton extends StatelessWidget {
-  const _TiltedKitschButton({
-    required this.label,
-    required this.color,
-    required this.onTap,
+class _PickerPanel extends StatelessWidget {
+  const _PickerPanel({
+    required this.title,
+    required this.accent,
+    required this.child,
   });
 
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
+  final String title;
+  final Color accent;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: -2.2 * math.pi / 180,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.CBrown, width: 1.4),
-            ),
-            child: Text(label, style: AppTextStyles.bodyMedium),
-          ),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: 0.42),
+            AppColors.CIvory,
+          ],
         ),
+        borderRadius: BorderRadius.circular(22),
+        border: AppTheme.handDrawnBorder(
+          color: accent.withValues(alpha: 0.75),
+          width: AppTheme.borderWidth,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.14),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.label.copyWith(color: AppColors.CTextPrimary),
+          ),
+          const SizedBox(height: 6),
+          child,
+        ],
       ),
     );
   }
 }
 
-class _PickerPopupFrame extends StatelessWidget {
-  const _PickerPopupFrame({
-    required this.title,
-    required this.child,
-    required this.onConfirm,
+class _TimeWheelPicker extends StatefulWidget {
+  const _TimeWheelPicker({
+    required this.time,
+    required this.onChanged,
   });
 
-  final String title;
-  final Widget child;
-  final VoidCallback onConfirm;
+  final TimeOfDay time;
+  final ValueChanged<TimeOfDay> onChanged;
+
+  @override
+  State<_TimeWheelPicker> createState() => _TimeWheelPickerState();
+}
+
+class _TimeWheelPickerState extends State<_TimeWheelPicker> {
+  static const _itemExtent = 40.0;
+  static const _visibleCount = 3;
+
+  late FixedExtentScrollController _hourController;
+  late FixedExtentScrollController _minuteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _hourController = FixedExtentScrollController(initialItem: widget.time.hour);
+    _minuteController =
+        FixedExtentScrollController(initialItem: widget.time.minute);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TimeWheelPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.time.hour != widget.time.hour &&
+        _hourController.selectedItem != widget.time.hour) {
+      _hourController.jumpToItem(widget.time.hour);
+    }
+    if (oldWidget.time.minute != widget.time.minute &&
+        _minuteController.selectedItem != widget.time.minute) {
+      _minuteController.jumpToItem(widget.time.minute);
+    }
+  }
+
+  @override
+  void dispose() {
+    _hourController.dispose();
+    _minuteController.dispose();
+    super.dispose();
+  }
+
+  void _notify() {
+    widget.onChanged(
+      TimeOfDay(
+        hour: _hourController.selectedItem,
+        minute: _minuteController.selectedItem,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 320,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    final wheelHeight = _itemExtent * _visibleCount;
+
+    return SizedBox(
+      height: wheelHeight + 8,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('취소'),
-                ),
-                Text(title, style: AppTextStyles.titleSmall),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: onConfirm,
-                  child: const Text('확인'),
-                ),
-              ],
+          Expanded(
+            child: _ScrollWheelColumn(
+              label: '시',
+              controller: _hourController,
+              itemCount: 24,
+              formatter: (i) => i.toString().padLeft(2, '0'),
+              onSelected: _notify,
             ),
           ),
-          const Divider(height: 1),
-          Expanded(child: child),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(':', style: AppTextStyles.titleMedium),
+          ),
+          Expanded(
+            child: _ScrollWheelColumn(
+              label: '분',
+              controller: _minuteController,
+              itemCount: 60,
+              formatter: (i) => i.toString().padLeft(2, '0'),
+              onSelected: _notify,
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _ScrollWheelColumn extends StatelessWidget {
+  const _ScrollWheelColumn({
+    required this.label,
+    required this.controller,
+    required this.itemCount,
+    required this.formatter,
+    required this.onSelected,
+  });
+
+  final String label;
+  final FixedExtentScrollController controller;
+  final int itemCount;
+  final String Function(int index) formatter;
+  final VoidCallback onSelected;
+
+  static const _itemExtent = 40.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(label, style: AppTextStyles.caption),
+        const SizedBox(height: 4),
+        Expanded(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned(
+                left: 4,
+                right: 4,
+                height: _itemExtent,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.CBackground.withValues(alpha: 0.65),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.CBrown.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
+              ),
+              ListWheelScrollView.useDelegate(
+                controller: controller,
+                itemExtent: _itemExtent,
+                diameterRatio: 1.35,
+                perspective: 0.004,
+                physics: const FixedExtentScrollPhysics(),
+                onSelectedItemChanged: (_) => onSelected(),
+                childDelegate: ListWheelChildBuilderDelegate(
+                  childCount: itemCount,
+                  builder: (context, index) {
+                    final selected = controller.selectedItem == index;
+                    return Center(
+                      child: Text(
+                        formatter(index),
+                        style: selected
+                            ? AppTextStyles.titleMedium.copyWith(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              )
+                            : AppTextStyles.bodyMedium.copyWith(
+                                fontSize: 15,
+                                color: AppColors.CTextTertiary
+                                    .withValues(alpha: 0.75),
+                              ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.CIvory.withValues(alpha: 0.92),
+                          Colors.transparent,
+                          Colors.transparent,
+                          AppColors.CIvory.withValues(alpha: 0.92),
+                        ],
+                        stops: const [0, 0.22, 0.78, 1],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

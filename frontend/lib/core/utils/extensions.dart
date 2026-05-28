@@ -23,10 +23,10 @@ extension BuildContextX on BuildContext {
         content: Text(
           message,
           style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.CBackground,
+            color: AppColors.CTextPrimary,
           ),
         ),
-        backgroundColor: AppColors.CTextPrimary,
+        backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         shape: AppTheme.roundedShape,
       ),
