@@ -5,16 +5,18 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/tomato_mascot.dart';
-import '../../manitto_game/data/mock_game_service.dart';
+import '../../manitto_game/data/game_repository.dart';
 
 class ReportReveal extends StatelessWidget {
   const ReportReveal({
     super.key,
-    required this.service,
+    required this.myManitto,
+    required this.chain,
     required this.onNext,
   });
 
-  final MockGameService service;
+  final ManittoPersonData myManitto;
+  final List<ManittoChainData> chain;
   final VoidCallback onNext;
 
   @override
@@ -22,7 +24,7 @@ class ReportReveal extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 36),
       children: [
-        _RevealCard(service: service),
+        _RevealCard(myManitto: myManitto),
         const SizedBox(height: 24),
         Container(
           width: double.infinity,
@@ -37,7 +39,7 @@ class ReportReveal extends StatelessWidget {
             children: [
               Text('전체 결과 관계도', style: AppTextStyles.titleMedium),
               const SizedBox(height: 14),
-              _ChainView(chain: service.chain),
+              _ChainView(chain: chain),
             ],
           ),
         ),
@@ -53,18 +55,11 @@ class ReportReveal extends StatelessWidget {
 }
 
 class _RevealCard extends StatelessWidget {
-  const _RevealCard({required this.service});
-
-  final MockGameService service;
+  const _RevealCard({required this.myManitto});
+  final ManittoPersonData myManitto;
 
   @override
   Widget build(BuildContext context) {
-    final backgroundAnswers = service.questionHistory
-        .map((q) => q.manittoAnswer)
-        .whereType<String>()
-        .take(3)
-        .toList(growable: false);
-
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
@@ -80,25 +75,6 @@ class _RevealCard extends StatelessWidget {
               painter: _RevealBackgroundPainter(),
             ),
           ),
-          for (final entry in backgroundAnswers.indexed)
-            Positioned(
-              left: entry.$1.isEven ? 12 : null,
-              right: entry.$1.isEven ? null : 8,
-              top: 18.0 + entry.$1 * 62,
-              width: 180,
-              child: Transform.rotate(
-                angle: entry.$1.isEven ? -0.13 : 0.10,
-                child: Text(
-                  entry.$2,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.CTextPrimary.withValues(alpha: 0.14),
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.clip,
-                ),
-              ),
-            ),
           Padding(
             padding: const EdgeInsets.all(24),
             child: Center(
@@ -117,7 +93,7 @@ class _RevealCard extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   Text(
-                    service.myManitto.displayName,
+                    myManitto.displayName,
                     style: AppTextStyles.displayLarge.copyWith(
                       color: AppColors.CRed,
                     ),
@@ -142,7 +118,7 @@ class _RevealCard extends StatelessWidget {
 class _ChainView extends StatelessWidget {
   const _ChainView({required this.chain});
 
-  final List<ManittoChainLink> chain;
+  final List<ManittoChainData> chain;
 
   @override
   Widget build(BuildContext context) {
