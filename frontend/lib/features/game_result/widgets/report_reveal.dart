@@ -122,26 +122,73 @@ class _ChainView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 10,
-        crossAxisAlignment: WrapCrossAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final link in chain)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _ChainLinkRow(link: link),
+          ),
+      ],
+    );
+  }
+}
+
+class _ChainLinkRow extends StatelessWidget {
+  const _ChainLinkRow({required this.link});
+
+  final ManittoChainData link;
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          for (final link in chain) ...[
-            Chip(
-              label: Text(link.manitto.displayName),
-              backgroundColor: AppColors.CSkyBlue.withValues(alpha: 0.35),
+          _NameChip(
+            label: link.manitto.displayName,
+            backgroundColor: AppColors.CSkyBlue.withValues(alpha: 0.35),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              color: AppColors.CRed,
+              size: 20,
             ),
-            const Icon(Icons.arrow_forward_rounded, color: AppColors.CRed),
-            Chip(
-              label: Text(link.manitti.displayName),
-              backgroundColor: AppColors.CPink.withValues(alpha: 0.35),
-            ),
-          ],
+          ),
+          _NameChip(
+            label: link.manitti.displayName,
+            backgroundColor: AppColors.CPink.withValues(alpha: 0.35),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _NameChip extends StatelessWidget {
+  const _NameChip({
+    required this.label,
+    required this.backgroundColor,
+  });
+
+  final String label;
+  final Color backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.visible,
+        softWrap: false,
+      ),
+      backgroundColor: backgroundColor,
     );
   }
 }

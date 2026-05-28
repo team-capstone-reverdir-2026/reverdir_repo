@@ -92,8 +92,13 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.roomDetail,
       builder: (context, state) {
         final roomId = state.pathParameters['roomId'] ?? '';
-        // TODO: RoomStatus에 따라 pre_start / finished 분기
-        return GameMainScreen(roomId: roomId);
+        final displayName = state.uri.queryParameters['displayName']?.trim();
+        return GameMainScreen(
+          key: ValueKey(state.uri.toString()),
+          roomId: roomId,
+          myDisplayName:
+              displayName == null || displayName.isEmpty ? null : displayName,
+        );
       },
       routes: [
         GoRoute(

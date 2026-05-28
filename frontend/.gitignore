@@ -27,11 +27,20 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
-.flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+
+# Generated on pub get / flutter run (do not commit)
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+package_config.json
+package_graph.json
+.dart_tool/package_config.json
+.dart_tool/package_graph.json
+.dart_tool/version
 
 # Symbolication related
 app.*.symbols

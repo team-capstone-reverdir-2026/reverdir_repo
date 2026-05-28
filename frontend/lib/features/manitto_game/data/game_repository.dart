@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_enums.dart';
@@ -14,6 +16,8 @@ class RoomDetailData {
     required this.daysRemaining,
     required this.isHost,
     required this.participantCount,
+    required this.missionCount,
+    this.inviteCode,
   });
 
   final String id;
@@ -24,6 +28,8 @@ class RoomDetailData {
   final int daysRemaining;
   final bool isHost;
   final int participantCount;
+  final int missionCount;
+  final String? inviteCode;
 
   factory RoomDetailData.fromJson(Map<String, dynamic> json) => RoomDetailData(
         id: json['id'] as String? ?? '',
@@ -34,6 +40,8 @@ class RoomDetailData {
         daysRemaining: json['daysRemaining'] as int? ?? 0,
         isHost: json['isHost'] as bool? ?? false,
         participantCount: json['participantCount'] as int? ?? 0,
+        missionCount: json['missionCount'] as int? ?? 0,
+        inviteCode: json['inviteCode'] as String?,
       );
 }
 
@@ -65,6 +73,16 @@ class EditableMission {
   });
   final String id;
   final String content;
+}
+
+class RoomMissionsData {
+  const RoomMissionsData({
+    required this.missions,
+    required this.maxCount,
+  });
+
+  final List<MissionUiItem> missions;
+  final int maxCount;
 }
 
 class ManittoPersonData {
@@ -134,6 +152,8 @@ class GameRepository {
   final ApiClient? _client;
   ApiClient get _api => _client ?? apiClient;
 
+  static const Duration _aiReportTimeout = Duration(minutes: 5);
+
   Future<RoomDetailData> fetchRoomDetail(String roomId) async {
     final res = await _api.get<Map<String, dynamic>>(ApiEndpoints.room(roomId));
     return RoomDetailData.fromJson(res.data ?? const {});
@@ -148,12 +168,15 @@ class GameRepository {
     return list.map(ParticipantData.fromJson).toList();
   }
 
-  Future<List<MissionUiItem>> fetchMissions(String roomId) async {
+  Future<RoomMissionsData> fetchMissions(String roomId) async {
     final res =
         await _api.get<Map<String, dynamic>>(ApiEndpoints.roomMissions(roomId));
     final list = (res.data?['missions'] as List<dynamic>? ?? const [])
         .cast<Map<String, dynamic>>();
-    return list.map(MissionUiItem.fromApiJson).toList();
+    return RoomMissionsData(
+      missions: list.map(MissionUiItem.fromApiJson).toList(),
+      maxCount: res.data?['maxCount'] as int? ?? 0,
+    );
   }
 
   Future<void> patchMission(
@@ -242,6 +265,11 @@ class GameRepository {
   Future<PersonalReportData> fetchMyReport(String roomId) async {
     final res = await _api.get<Map<String, dynamic>>(
       ApiEndpoints.roomResultsMyReport(roomId),
+      options: Options(
+        connectTimeout: _aiReportTimeout,
+        receiveTimeout: _aiReportTimeout,
+        sendTimeout: _aiReportTimeout,
+      ),
     );
     final data = res.data ?? const {};
     final status = ReportStatus.tryParse(data['status'] as String?) ?? ReportStatus.pending;

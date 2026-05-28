@@ -174,8 +174,11 @@ class _MissionInputScreenState extends State<MissionInputScreen> {
       if (status == 'ENDED') {
         context.go(AppRoutes.roomResultsPath(roomId));
       } else {
-        // BEFORE_START/WAITING/IN_PROGRESS -> 게임 메인(내부에서 phase 분기)
-        context.go(AppRoutes.roomDetailPath(roomId));
+        final encodedName = Uri.encodeComponent(widget.userName);
+        context.go(
+          '${AppRoutes.roomDetailPath(roomId)}'
+          '?displayName=$encodedName&r=${DateTime.now().millisecondsSinceEpoch}',
+        );
       }
     } catch (e, s) {
       _showApiError(

@@ -20,6 +20,8 @@ class PreStartView extends StatefulWidget {
     required this.isHost,
     required this.participants,
     required this.myMissions,
+    required this.myMissionCount,
+    this.myDisplayName,
     required this.onStart,
     required this.onAddMission,
     required this.onRecommend,
@@ -34,6 +36,8 @@ class PreStartView extends StatefulWidget {
   final bool isHost;
   final List<ParticipantData> participants;
   final List<EditableMission> myMissions;
+  final int myMissionCount;
+  final String? myDisplayName;
   final Future<void> Function() onStart;
   final Future<void> Function(String content) onAddMission;
   final Future<String> Function() onRecommend;
@@ -75,6 +79,8 @@ class _PreStartViewState extends State<PreStartView> {
             _ParticipantsCard(
               participants: widget.participants,
               maxMissionCount: widget.maxMissionCount,
+              myMissionCount: widget.myMissionCount,
+              myDisplayName: widget.myDisplayName,
             ),
             const SizedBox(height: 22),
             _MissionDraftCard(
@@ -281,9 +287,23 @@ class _ParticipantsCard extends StatelessWidget {
   const _ParticipantsCard({
     required this.participants,
     required this.maxMissionCount,
+    required this.myMissionCount,
+    this.myDisplayName,
   });
   final List<ParticipantData> participants;
   final int maxMissionCount;
+  final int myMissionCount;
+  final String? myDisplayName;
+
+  int _missionCountFor(ParticipantData participant) {
+    final mine = myDisplayName?.trim();
+    if (mine != null &&
+        mine.isNotEmpty &&
+        participant.displayName.trim() == mine) {
+      return myMissionCount;
+    }
+    return participant.missionCount;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -302,51 +322,54 @@ class _ParticipantsCard extends StatelessWidget {
             Text('참여자 미션 준비 현황', style: AppTextStyles.titleMedium),
             const SizedBox(height: 14),
             ...participants.map(
-              (p) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor:
-                          p.isHost ? AppColors.CRed : AppColors.CBlue,
-                      child: Text(
-                        p.displayName.characters.first,
-                        style: AppTextStyles.label.copyWith(
-                          color: AppColors.CBackground,
+              (p) {
+                final entered = _missionCountFor(p);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor:
+                            p.isHost ? AppColors.CRed : AppColors.CBlue,
+                        child: Text(
+                          p.displayName.characters.first,
+                          style: AppTextStyles.label.copyWith(
+                            color: AppColors.CBackground,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        p.displayName,
-                        style: AppTextStyles.bodyLarge,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: p.missionCount >= maxMissionCount
-                            ? AppColors.CGreen.withValues(alpha: 0.48)
-                            : AppColors.CYellow.withValues(alpha: 0.60),
-                        borderRadius: BorderRadius.circular(999),
-                        border: AppTheme.handDrawnBorder(
-                          color: AppColors.CBrown,
-                          width: 1,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          p.displayName,
+                          style: AppTextStyles.bodyLarge,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      child: Text(
-                        '${p.missionCount}/$maxMissionCount개',
-                        style: AppTextStyles.label,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: entered >= maxMissionCount
+                              ? AppColors.CGreen.withValues(alpha: 0.48)
+                              : AppColors.CYellow.withValues(alpha: 0.60),
+                          borderRadius: BorderRadius.circular(999),
+                          border: AppTheme.handDrawnBorder(
+                            color: AppColors.CBrown,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '$entered/$maxMissionCount개',
+                          style: AppTextStyles.label,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -400,6 +423,7 @@ class _MissionDraftCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 ...myMissions.map(
                   (mission) => _EditableMissionRow(
+                    key: ValueKey(mission.id),
                     mission: mission,
                     onChanged: (value) => onUpdateMission(mission.id, value),
                     onDelete: () => onDeleteMission(mission.id),
@@ -471,6 +495,7 @@ class _MissionDraftCard extends StatelessWidget {
 
 class _EditableMissionRow extends StatefulWidget {
   const _EditableMissionRow({
+    super.key,
     required this.mission,
     required this.onChanged,
     required this.onDelete,
@@ -491,6 +516,15 @@ class _EditableMissionRowState extends State<_EditableMissionRow> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.mission.content);
+  }
+
+  @override
+  void didUpdateWidget(covariant _EditableMissionRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mission.id != widget.mission.id ||
+        oldWidget.mission.content != widget.mission.content) {
+      _controller.text = widget.mission.content;
+    }
   }
 
   @override
