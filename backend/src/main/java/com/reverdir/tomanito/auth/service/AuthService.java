@@ -66,4 +66,9 @@ public class AuthService {
         String refreshToken = jwtProvider.createRefreshToken(user);
         return AuthResponse.of(accessToken, refreshToken, user);
     }
+
+    @Transactional
+    public void logout(Long userId) {
+        // TODO: 추후 로그아웃 로직 고도화
+    }
 }
