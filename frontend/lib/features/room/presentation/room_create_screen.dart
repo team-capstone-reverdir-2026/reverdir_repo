@@ -80,7 +80,7 @@ class _RoomCreateScreenState extends State<RoomCreateScreen> {
         data: {
           'name': _nameController.text.trim(),
           'description': _descController.text.trim(),
-          'endsAt': due.toIso8601String(),
+          'endsAt': due.toUtc().toIso8601String(),
           'missionCount': _missionCount,
         },
       );
