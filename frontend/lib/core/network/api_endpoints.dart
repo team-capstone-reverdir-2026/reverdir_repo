@@ -11,7 +11,7 @@ class ApiEndpoints {
   static const String localBaseUrl = 'http://localhost:8080/v1';
 
   /// 앱 기본 Base URL (Production)
-  static const String baseUrl = localBaseUrl;
+  static const String baseUrl = productionBaseUrl;
 
   // ── Auth ────────────────────────────────────────────────────────────────
   static const String authRegister = '/auth/register';
