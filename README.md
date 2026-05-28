@@ -71,8 +71,8 @@
 * MySQL 8.0
 
 ### Frontend
-* Flutter (버전 추가)
-* Dart (버전 추가)
+* Flutter 3.41.5
+* Dart 3.11.3
 
 ### External Services
 * OpenAI API
