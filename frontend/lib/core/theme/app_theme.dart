@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../network/api_enums.dart';
 import 'app_colors.dart';
@@ -246,7 +247,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: borderRadius),
       ),
 
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.CBackground,
         selectedItemColor: AppColors.CRed,
         unselectedItemColor: AppColors.CTextTertiary,
@@ -328,7 +329,7 @@ class AppTheme {
         }),
       ),
 
-      listTileTheme: const ListTileThemeData(
+      listTileTheme: ListTileThemeData(
         iconColor: AppColors.CTextSecondary,
         textColor: AppColors.CTextPrimary,
         titleTextStyle: AppTextStyles.bodyLarge,
@@ -455,21 +456,25 @@ class AppTheme {
       );
 
   static TextTheme _buildTextTheme() {
-    return const TextTheme(
-      displayLarge: AppTextStyles.displayLarge,
-      displayMedium: AppTextStyles.displayMedium,
-      headlineLarge: AppTextStyles.titleLarge,
-      headlineMedium: AppTextStyles.titleMedium,
-      headlineSmall: AppTextStyles.titleSmall,
-      titleLarge: AppTextStyles.titleLarge,
-      titleMedium: AppTextStyles.titleMedium,
-      titleSmall: AppTextStyles.titleSmall,
-      bodyLarge: AppTextStyles.bodyLarge,
-      bodyMedium: AppTextStyles.bodyMedium,
-      bodySmall: AppTextStyles.bodySmall,
-      labelLarge: AppTextStyles.label,
-      labelMedium: AppTextStyles.caption,
-      labelSmall: AppTextStyles.caption,
+    final base = GoogleFonts.poorStoryTextTheme(
+      ThemeData.light().textTheme,
+    );
+    final app = AppTextStyles.materialTextTheme;
+    return base.copyWith(
+      displayLarge: app.displayLarge,
+      displayMedium: app.displayMedium,
+      headlineLarge: app.headlineLarge,
+      headlineMedium: app.headlineMedium,
+      headlineSmall: app.headlineSmall,
+      titleLarge: app.titleLarge,
+      titleMedium: app.titleMedium,
+      titleSmall: app.titleSmall,
+      bodyLarge: app.bodyLarge,
+      bodyMedium: app.bodyMedium,
+      bodySmall: app.bodySmall,
+      labelLarge: app.labelLarge,
+      labelMedium: app.labelMedium,
+      labelSmall: app.labelSmall,
     );
   }
 }

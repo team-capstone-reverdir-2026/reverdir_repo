@@ -70,9 +70,9 @@ class _MissionCountSelectorState extends State<MissionCountSelector>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.CPink.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.CBrown, width: 1.2),
+            color: AppColors.CIvory,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.CBrown, width: 1.3),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
