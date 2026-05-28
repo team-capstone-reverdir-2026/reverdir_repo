@@ -15,10 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(
@@ -27,6 +24,8 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor
 public class ParticipantReport extends BaseEntity {
 
     @Id
@@ -54,17 +53,4 @@ public class ParticipantReport extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String storyText;
 
-    @Builder
-    public ParticipantReport(Room room, Participant participant) {
-        this.room = room;
-        this.participant = participant;
-        this.status = ReportStatus.PENDING;
-    }
-
-    public void complete(String typeName, String typeImageUrl, String storyText) {
-        this.status = ReportStatus.READY;
-        this.typeName = typeName;
-        this.typeImageUrl = typeImageUrl;
-        this.storyText = storyText;
-    }
 }
