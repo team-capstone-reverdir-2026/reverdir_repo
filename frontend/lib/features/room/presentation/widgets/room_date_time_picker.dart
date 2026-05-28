@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/network/error_handler.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/washi_tape.dart';
 
 class RoomDateTimePicker extends StatefulWidget {
   const RoomDateTimePicker({
@@ -26,23 +26,12 @@ class RoomDateTimePicker extends StatefulWidget {
 }
 
 class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
-  String? _errorText;
-
   DateTime get _safeDate => widget.selectedDate ?? DateTime.now();
   TimeOfDay get _safeTime => widget.selectedTime ?? const TimeOfDay(hour: 18, minute: 0);
 
   Future<void> _syncToServerIfNeeded() async {
     if (widget.onSyncToServer == null) return;
-    try {
-      setState(() => _errorText = null);
-      await widget.onSyncToServer!(_safeDate, _safeTime);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _errorText = 'API 호출/응답 문제: ${e.message}');
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _errorText = 'API 호출/응답 문제: 날짜/시간 저장에 실패했습니다.');
-    }
+    await widget.onSyncToServer!(_safeDate, _safeTime);
   }
 
   @override
@@ -50,21 +39,14 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
     final firstDate = DateTime.now().subtract(const Duration(days: 1));
     final lastDate = DateTime.now().add(const Duration(days: 3650));
 
-    final datePanel = _PickerPanel(
-      title: '종료 일자',
-      accent: AppColors.CYellow,
-      child: SizedBox(
-        height: 300,
-        child: CalendarDatePicker(
-          initialDate: _safeDate,
-          firstDate: firstDate,
-          lastDate: lastDate,
-          onDateChanged: (date) {
-            widget.onDateSelected(date);
-            _syncToServerIfNeeded();
-          },
-        ),
-      ),
+    final datePanel = _CalendarDatePanel(
+      selectedDate: _safeDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      onDateChanged: (date) {
+        widget.onDateSelected(date);
+        _syncToServerIfNeeded();
+      },
     );
 
     final timePanel = _PickerPanel(
@@ -103,13 +85,105 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
             );
           },
         ),
-        if (_errorText != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            _errorText!,
-            style: AppTextStyles.caption.copyWith(color: AppColors.CRed),
+      ],
+    );
+  }
+}
+
+/// 미션 카드 느낌의 파스텔 초록 달력 위젯 + 와시 테이프.
+class _CalendarDatePanel extends StatelessWidget {
+  const _CalendarDatePanel({
+    required this.selectedDate,
+    required this.firstDate,
+    required this.lastDate,
+    required this.onDateChanged,
+  });
+
+  final DateTime selectedDate;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final ValueChanged<DateTime> onDateChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 6),
+          padding: const EdgeInsets.fromLTRB(8, 20, 8, 10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.CGreen.withValues(alpha: 0.42),
+                AppColors.CSkyBlue.withValues(alpha: 0.18),
+                AppColors.CIvory,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(30),
+            border: AppTheme.handDrawnBorder(
+              color: AppColors.CGreen.withValues(alpha: 0.82),
+              width: AppTheme.borderWidthFocus,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.CGreen.withValues(alpha: 0.18),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '종료 일자',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.CTextPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                height: 300,
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: Theme.of(context).colorScheme.copyWith(
+                          primary: AppColors.CGreen,
+                          onPrimary: AppColors.CBackground,
+                        ),
+                  ),
+                  child: CalendarDatePicker(
+                    initialDate: selectedDate,
+                    firstDate: firstDate,
+                    lastDate: lastDate,
+                    onDateChanged: onDateChanged,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Positioned(
+          top: -2,
+          left: 28,
+          child: WashiTape(
+            color: WashiTapeColor.green,
+            width: 92,
+            rotation: -4,
+          ),
+        ),
+        const Positioned(
+          top: 4,
+          right: 24,
+          child: WashiTape(
+            color: WashiTapeColor.yellow,
+            width: 72,
+            rotation: 6,
+          ),
+        ),
       ],
     );
   }
@@ -154,6 +228,7 @@ class _PickerPanel extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             title,
@@ -161,7 +236,7 @@ class _PickerPanel extends StatelessWidget {
             style: AppTextStyles.label.copyWith(color: AppColors.CTextPrimary),
           ),
           const SizedBox(height: 6),
-          child,
+          ClipRect(child: child),
         ],
       ),
     );
@@ -182,65 +257,27 @@ class _TimeWheelPicker extends StatefulWidget {
 }
 
 class _TimeWheelPickerState extends State<_TimeWheelPicker> {
-  static const _itemExtent = 40.0;
-  static const _visibleCount = 3;
+  static int _minuteSlot(int minute) => ((minute + 5) ~/ 10) % 6;
 
-  late FixedExtentScrollController _hourController;
-  late FixedExtentScrollController _minuteController;
-
-  @override
-  void initState() {
-    super.initState();
-    _hourController = FixedExtentScrollController(initialItem: widget.time.hour);
-    _minuteController =
-        FixedExtentScrollController(initialItem: widget.time.minute);
-  }
-
-  @override
-  void didUpdateWidget(covariant _TimeWheelPicker oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.time.hour != widget.time.hour &&
-        _hourController.selectedItem != widget.time.hour) {
-      _hourController.jumpToItem(widget.time.hour);
-    }
-    if (oldWidget.time.minute != widget.time.minute &&
-        _minuteController.selectedItem != widget.time.minute) {
-      _minuteController.jumpToItem(widget.time.minute);
-    }
-  }
-
-  @override
-  void dispose() {
-    _hourController.dispose();
-    _minuteController.dispose();
-    super.dispose();
-  }
-
-  void _notify() {
-    widget.onChanged(
-      TimeOfDay(
-        hour: _hourController.selectedItem,
-        minute: _minuteController.selectedItem,
-      ),
-    );
+  void _onChanged(int hour, int minute) {
+    widget.onChanged(TimeOfDay(hour: hour, minute: minute));
   }
 
   @override
   Widget build(BuildContext context) {
-    final wheelHeight = _itemExtent * _visibleCount;
-
     return SizedBox(
-      height: wheelHeight + 8,
+      height: 152,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            child: _ScrollWheelColumn(
+            child: _LoopingWheelColumn(
               label: '시',
-              controller: _hourController,
-              itemCount: 24,
-              formatter: (i) => i.toString().padLeft(2, '0'),
-              onSelected: _notify,
+              loopCount: 24,
+              initialIndex: widget.time.hour,
+              labelBuilder: (index) => index.toString().padLeft(2, '0'),
+              onSelected: (index) =>
+                  _onChanged(index, widget.time.minute),
             ),
           ),
           Padding(
@@ -248,12 +285,14 @@ class _TimeWheelPickerState extends State<_TimeWheelPicker> {
             child: Text(':', style: AppTextStyles.titleMedium),
           ),
           Expanded(
-            child: _ScrollWheelColumn(
+            child: _LoopingWheelColumn(
               label: '분',
-              controller: _minuteController,
-              itemCount: 60,
-              formatter: (i) => i.toString().padLeft(2, '0'),
-              onSelected: _notify,
+              loopCount: 6,
+              initialIndex: _minuteSlot(widget.time.minute),
+              labelBuilder: (index) =>
+                  (index * 10).toString().padLeft(2, '0'),
+              onSelected: (index) =>
+                  _onChanged(widget.time.hour, index * 10),
             ),
           ),
         ],
@@ -262,30 +301,95 @@ class _TimeWheelPickerState extends State<_TimeWheelPicker> {
   }
 }
 
-class _ScrollWheelColumn extends StatelessWidget {
-  const _ScrollWheelColumn({
+class _LoopingWheelColumn extends StatefulWidget {
+  const _LoopingWheelColumn({
     required this.label,
-    required this.controller,
-    required this.itemCount,
-    required this.formatter,
+    required this.loopCount,
+    required this.initialIndex,
+    required this.labelBuilder,
     required this.onSelected,
   });
 
   final String label;
-  final FixedExtentScrollController controller;
-  final int itemCount;
-  final String Function(int index) formatter;
-  final VoidCallback onSelected;
+  final int loopCount;
+  final int initialIndex;
+  final String Function(int index) labelBuilder;
+  final ValueChanged<int> onSelected;
 
+  @override
+  State<_LoopingWheelColumn> createState() => _LoopingWheelColumnState();
+}
+
+class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
   static const _itemExtent = 40.0;
+  static const _visibleRows = 3;
+  static const _loopRepeats = 400;
+
+  late final int _anchor;
+  late FixedExtentScrollController _controller;
+
+  static TextStyle get _wheelTextStyle => AppTextStyles.titleMedium.copyWith(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        height: 1.1,
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    _anchor = widget.loopCount * _loopRepeats ~/ 2;
+    final safeIndex = widget.initialIndex.clamp(0, widget.loopCount - 1);
+    _controller = FixedExtentScrollController(
+      initialItem: _anchor + safeIndex,
+    );
+    _controller.addListener(_recentreIfNeeded);
+  }
+
+  @override
+  void didUpdateWidget(covariant _LoopingWheelColumn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      final target = _anchor + widget.initialIndex.clamp(0, widget.loopCount - 1);
+      if (_controller.selectedItem != target) {
+        _controller.jumpToItem(target);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_recentreIfNeeded);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  int get _loopIndex => _controller.selectedItem % widget.loopCount;
+
+  void _recentreIfNeeded() {
+    if (!_controller.hasClients) return;
+    final item = _controller.selectedItem;
+    final low = widget.loopCount * 40;
+    final high = widget.loopCount * (_loopRepeats - 40);
+    if (item < low || item > high) {
+      _controller.jumpToItem(_anchor + _loopIndex);
+    }
+  }
+
+  void _handleSelection(int index) {
+    final value = index % widget.loopCount;
+    widget.onSelected(value);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final wheelHeight = _itemExtent * _visibleRows;
+
     return Column(
       children: [
-        Text(label, style: AppTextStyles.caption),
+        Text(widget.label, style: AppTextStyles.caption),
         const SizedBox(height: 4),
-        Expanded(
+        SizedBox(
+          height: wheelHeight,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -303,50 +407,33 @@ class _ScrollWheelColumn extends StatelessWidget {
                   ),
                 ),
               ),
-              ListWheelScrollView.useDelegate(
-                controller: controller,
-                itemExtent: _itemExtent,
-                diameterRatio: 1.35,
-                perspective: 0.004,
-                physics: const FixedExtentScrollPhysics(),
-                onSelectedItemChanged: (_) => onSelected(),
-                childDelegate: ListWheelChildBuilderDelegate(
-                  childCount: itemCount,
-                  builder: (context, index) {
-                    final selected = controller.selectedItem == index;
-                    return Center(
-                      child: Text(
-                        formatter(index),
-                        style: selected
-                            ? AppTextStyles.titleMedium.copyWith(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                              )
-                            : AppTextStyles.bodyMedium.copyWith(
-                                fontSize: 15,
-                                color: AppColors.CTextTertiary
-                                    .withValues(alpha: 0.75),
+              ClipRect(
+                child: SizedBox(
+                  height: wheelHeight,
+                  child: ListWheelScrollView.useDelegate(
+                    controller: _controller,
+                    itemExtent: _itemExtent,
+                    diameterRatio: 1.45,
+                    perspective: 0.003,
+                    physics: const FixedExtentScrollPhysics(),
+                    onSelectedItemChanged: _handleSelection,
+                    childDelegate: ListWheelChildBuilderDelegate(
+                      childCount: widget.loopCount * _loopRepeats,
+                      builder: (context, index) {
+                        final loopIndex = index % widget.loopCount;
+                        final selected = _controller.hasClients &&
+                            _controller.selectedItem == index;
+                        return Center(
+                          child: Text(
+                            widget.labelBuilder(loopIndex),
+                            style: _wheelTextStyle.copyWith(
+                              color: AppColors.CTextPrimary.withValues(
+                                alpha: selected ? 1 : 0.38,
                               ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppColors.CIvory.withValues(alpha: 0.92),
-                          Colors.transparent,
-                          Colors.transparent,
-                          AppColors.CIvory.withValues(alpha: 0.92),
-                        ],
-                        stops: const [0, 0.22, 0.78, 1],
-                      ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

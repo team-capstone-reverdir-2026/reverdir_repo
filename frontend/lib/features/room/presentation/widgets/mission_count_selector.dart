@@ -60,10 +60,6 @@ class _MissionCountSelectorState extends State<MissionCountSelector>
 
   @override
   Widget build(BuildContext context) {
-    final errorText = widget.apiException == null
-        ? null
-        : 'API 호출/응답 문제: ${widget.apiException!.message}';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -104,13 +100,6 @@ class _MissionCountSelectorState extends State<MissionCountSelector>
             ],
           ),
         ),
-        if (errorText != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            errorText,
-            style: AppTextStyles.caption.copyWith(color: AppColors.CRed),
-          ),
-        ],
       ],
     );
   }

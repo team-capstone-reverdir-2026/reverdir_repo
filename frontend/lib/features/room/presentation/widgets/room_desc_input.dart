@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/network/error_handler.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -29,11 +30,7 @@ class RoomDescInput extends StatefulWidget {
 class _RoomDescInputState extends State<RoomDescInput> {
   String? _localErrorText;
 
-  String? get _errorText {
-    if (_localErrorText != null) return _localErrorText;
-    if (widget.apiException == null) return null;
-    return 'API 호출/응답 문제: ${widget.apiException!.message}';
-  }
+  String? get _errorText => _localErrorText;
 
   Future<void> _submitToServer(String value) async {
     if (widget.onSubmitToServer == null) return;
@@ -42,10 +39,11 @@ class _RoomDescInputState extends State<RoomDescInput> {
       await widget.onSubmitToServer!(value);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _localErrorText = 'API 호출/응답 문제: ${e.message}');
-    } catch (_) {
       if (!mounted) return;
-      setState(() => _localErrorText = 'API 호출/응답 문제: 알 수 없는 오류가 발생했습니다.');
+      context.showUserError(e);
+    } catch (e) {
+      if (!mounted) return;
+      context.showUserError(e);
     }
   }
 

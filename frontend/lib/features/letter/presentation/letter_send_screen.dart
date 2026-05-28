@@ -138,7 +138,7 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
                           context.pop();
                         } catch (e) {
                           if (!mounted) return;
-                          context.showErrorSnackBar('API 호출/응답 문제: $e');
+                          context.showUserError(e);
                         } finally {
                           if (mounted) setState(() => _submitting = false);
                         }
