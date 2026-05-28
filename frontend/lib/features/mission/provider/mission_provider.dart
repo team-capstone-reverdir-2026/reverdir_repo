@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_parse.dart';
+
 /// GET /rooms/{roomId}/missions — Mission UI 항목
 class MissionUiItem {
   const MissionUiItem({
@@ -19,9 +21,9 @@ class MissionUiItem {
       );
 
   factory MissionUiItem.fromApiJson(Map<String, dynamic> json) => MissionUiItem(
-        id: json['id'] as String? ?? '',
-        content: json['content'] as String? ?? '',
-        isCompleted: json['isCompleted'] as bool? ?? false,
+        id: parseJsonString(json['id']),
+        content: parseJsonString(json['content']),
+        isCompleted: parseJsonBool(json['isCompleted']),
       );
 }
 

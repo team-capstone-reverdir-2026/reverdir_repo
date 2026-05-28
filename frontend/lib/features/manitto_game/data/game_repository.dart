@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_enums.dart';
+import '../../../core/utils/json_parse.dart';
 import '../../hint/provider/hint_provider.dart';
 import '../../mission/provider/mission_provider.dart';
 
@@ -32,16 +33,19 @@ class RoomDetailData {
   final String? inviteCode;
 
   factory RoomDetailData.fromJson(Map<String, dynamic> json) => RoomDetailData(
-        id: json['id'] as String? ?? '',
-        name: json['name'] as String? ?? '',
-        description: json['description'] as String? ?? '',
-        status: RoomStatus.tryParse(json['status'] as String?) ?? RoomStatus.waiting,
-        endsAt: DateTime.tryParse(json['endsAt'] as String? ?? ''),
-        daysRemaining: json['daysRemaining'] as int? ?? 0,
-        isHost: json['isHost'] as bool? ?? false,
-        participantCount: json['participantCount'] as int? ?? 0,
-        missionCount: json['missionCount'] as int? ?? 0,
-        inviteCode: json['inviteCode'] as String?,
+        id: parseJsonString(json['id']),
+        name: parseJsonString(json['name']),
+        description: parseJsonString(json['description']),
+        status: RoomStatus.tryParse(parseJsonString(json['status'])) ??
+            RoomStatus.waiting,
+        endsAt: DateTime.tryParse(parseJsonString(json['endsAt'])),
+        daysRemaining: parseJsonInt(json['daysRemaining']),
+        isHost: parseJsonBool(json['isHost']),
+        participantCount: parseJsonInt(json['participantCount']),
+        missionCount: parseJsonInt(json['missionCount']),
+        inviteCode: json['inviteCode'] == null
+            ? null
+            : parseJsonString(json['inviteCode']),
       );
 }
 
@@ -59,10 +63,10 @@ class ParticipantData {
   final bool isHost;
 
   factory ParticipantData.fromJson(Map<String, dynamic> json) => ParticipantData(
-        userId: json['userId'] as String? ?? '',
-        displayName: json['displayName'] as String? ?? '',
-        missionCount: json['missionCount'] as int? ?? 0,
-        isHost: json['isHost'] as bool? ?? false,
+        userId: parseJsonString(json['userId']),
+        displayName: parseJsonString(json['displayName']),
+        missionCount: parseJsonInt(json['missionCount']),
+        isHost: parseJsonBool(json['isHost']),
       );
 }
 
@@ -91,8 +95,8 @@ class ManittoPersonData {
   final String displayName;
   factory ManittoPersonData.fromJson(Map<String, dynamic> json) =>
       ManittoPersonData(
-        userId: json['userId'] as String? ?? '',
-        displayName: json['displayName'] as String? ?? '',
+        userId: parseJsonString(json['userId']),
+        displayName: parseJsonString(json['displayName']),
       );
 }
 
@@ -102,10 +106,10 @@ class ManittoChainData {
   final ManittoPersonData manitti;
   factory ManittoChainData.fromJson(Map<String, dynamic> json) => ManittoChainData(
         manitto: ManittoPersonData.fromJson(
-          (json['manitto'] as Map<String, dynamic>?) ?? const {},
+          parseJsonMap(json['manitto']) ?? const {},
         ),
         manitti: ManittoPersonData.fromJson(
-          (json['manitti'] as Map<String, dynamic>?) ?? const {},
+          parseJsonMap(json['manitti']) ?? const {},
         ),
       );
 }
@@ -139,11 +143,15 @@ class QuestionHistoryData {
 
   factory QuestionHistoryData.fromJson(Map<String, dynamic> json) =>
       QuestionHistoryData(
-        date: json['date'] as String? ?? '',
-        question: json['question'] as String? ?? '',
-        myAnswer: json['myAnswer'] as String?,
-        manittoAnswer: json['manitoAnswer'] as String?,
-        isBlurred: json['isBlurred'] as bool? ?? false,
+        date: parseJsonString(json['date']),
+        question: parseJsonString(json['question']),
+        myAnswer: json['myAnswer'] == null
+            ? null
+            : parseJsonString(json['myAnswer']),
+        manittoAnswer: json['manitoAnswer'] == null
+            ? null
+            : parseJsonString(json['manitoAnswer']),
+        isBlurred: parseJsonBool(json['isBlurred']),
       );
 }
 
@@ -163,19 +171,17 @@ class GameRepository {
     final res = await _api.get<Map<String, dynamic>>(
       ApiEndpoints.roomParticipants(roomId),
     );
-    final list = (res.data?['participants'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>();
+    final list = parseJsonMapList(res.data?['participants']);
     return list.map(ParticipantData.fromJson).toList();
   }
 
   Future<RoomMissionsData> fetchMissions(String roomId) async {
     final res =
         await _api.get<Map<String, dynamic>>(ApiEndpoints.roomMissions(roomId));
-    final list = (res.data?['missions'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>();
+    final list = parseJsonMapList(res.data?['missions']);
     return RoomMissionsData(
       missions: list.map(MissionUiItem.fromApiJson).toList(),
-      maxCount: res.data?['maxCount'] as int? ?? 0,
+      maxCount: parseJsonInt(res.data?['maxCount']),
     );
   }
 
@@ -208,7 +214,7 @@ class GameRepository {
   Future<String> recommendMission() async {
     final res =
         await _api.get<Map<String, dynamic>>(ApiEndpoints.missionsRandom);
-    return res.data?['content'] as String? ?? '';
+    return parseJsonString(res.data?['content']);
   }
 
   Future<TodayQuestionViewData> fetchTodayQuestion(String roomId) async {
@@ -227,8 +233,8 @@ class GameRepository {
 
   Future<String?> fetchMyManittiName(String roomId) async {
     final res = await _api.get<Map<String, dynamic>>(ApiEndpoints.roomMyManitti(roomId));
-    final name = (res.data?['displayName'] as String?)?.trim();
-    if (name == null || name.isEmpty) return null;
+    final name = parseJsonString(res.data?['displayName']).trim();
+    if (name.isEmpty) return null;
     return name;
   }
 
@@ -240,8 +246,7 @@ class GameRepository {
     final res = await _api.get<Map<String, dynamic>>(
       ApiEndpoints.roomQuestionsHistory(roomId),
     );
-    final list = (res.data?['history'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>();
+    final list = parseJsonMapList(res.data?['history']);
     return list.map(QuestionHistoryData.fromJson).toList();
   }
 
@@ -253,10 +258,9 @@ class GameRepository {
     );
     final data = res.data ?? const {};
     final myManitto = ManittoPersonData.fromJson(
-      (data['myManitto'] as Map<String, dynamic>?) ?? const {},
+      parseJsonMap(data['myManitto']) ?? const {},
     );
-    final chain = ((data['chain'] as List<dynamic>?) ?? const [])
-        .cast<Map<String, dynamic>>()
+    final chain = parseJsonMapList(data['chain'])
         .map(ManittoChainData.fromJson)
         .toList();
     return (myManitto, chain);
@@ -272,12 +276,16 @@ class GameRepository {
       ),
     );
     final data = res.data ?? const {};
-    final status = ReportStatus.tryParse(data['status'] as String?) ?? ReportStatus.pending;
+    final status =
+        ReportStatus.tryParse(parseJsonString(data['status'])) ??
+            ReportStatus.pending;
     return PersonalReportData(
       status: status,
-      typeName: data['typeName'] as String? ?? '',
-      storyText: data['storyText'] as String? ?? '',
-      typeImageUrl: data['typeImageUrl'] as String?,
+      typeName: parseJsonString(data['typeName']),
+      storyText: parseJsonString(data['storyText']),
+      typeImageUrl: data['typeImageUrl'] == null
+          ? null
+          : parseJsonString(data['typeImageUrl']),
     );
   }
 }
