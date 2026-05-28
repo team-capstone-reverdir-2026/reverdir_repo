@@ -18,14 +18,3 @@ out/
 backend/.gradle/
 backend/build/
 backend/out/
-build/
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-.idea/
-.vscode/
-windows/
-linux/
-macos/
