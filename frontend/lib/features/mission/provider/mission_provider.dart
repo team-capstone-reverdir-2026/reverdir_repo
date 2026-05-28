@@ -29,39 +29,37 @@ class MissionUiItem {
 ///
 /// TODO: [MissionRepository.patchMission] API 연동
 class MissionProvider extends ChangeNotifier {
-  MissionProvider(List<MissionUiItem> initial) : _missions = List.of(initial);
+  MissionProvider(
+    List<MissionUiItem> initial, {
+    Future<void> Function(String missionId, bool isCompleted)? onToggleRemote,
+  })  : _missions = List.of(initial),
+        _onToggleRemote = onToggleRemote;
 
   factory MissionProvider.empty() => MissionProvider(const []);
 
-  factory MissionProvider.mock() => MissionProvider(const [
-        MissionUiItem(
-          id: 'm1',
-          content: '아침에 만나면 윙크하며 인사하기',
-          isCompleted: true,
-        ),
-        MissionUiItem(
-          id: 'm2',
-          content: '커피나 간식 몰래 책상에 올려두기',
-        ),
-        MissionUiItem(
-          id: 'm3',
-          content: '칭찬 한 마디 건네기',
-        ),
-      ]);
-
   List<MissionUiItem> _missions;
+  final Future<void> Function(String missionId, bool isCompleted)? _onToggleRemote;
   List<MissionUiItem> get missions => List.unmodifiable(_missions);
 
-  void toggleMission(String missionId) {
+  Future<void> toggleMission(String missionId) async {
     final index = _missions.indexWhere((m) => m.id == missionId);
     if (index < 0) return;
 
+    final next = !_missions[index].isCompleted;
     _missions[index] = _missions[index].copyWith(
-      isCompleted: !_missions[index].isCompleted,
+      isCompleted: next,
     );
     notifyListeners();
 
-    // TODO: missionRepository.patchMission(roomId, missionId, isCompleted: ...)
+    try {
+      await _onToggleRemote?.call(missionId, next);
+    } catch (_) {
+      _missions[index] = _missions[index].copyWith(
+        isCompleted: !next,
+      );
+      notifyListeners();
+      rethrow;
+    }
   }
 
   void setMissions(List<MissionUiItem> items) {

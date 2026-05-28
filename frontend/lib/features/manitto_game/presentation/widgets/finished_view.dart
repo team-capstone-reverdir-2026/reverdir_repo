@@ -7,17 +7,18 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/tomato_mascot.dart';
 import '../../../../core/widgets/washi_tape.dart';
-import '../../data/mock_game_service.dart';
 
 class FinishedView extends StatelessWidget {
   const FinishedView({
     super.key,
-    required this.service,
+    required this.participantCount,
+    required this.receivedNoteCount,
     required this.onOpenLetters,
     required this.onOpenResults,
   });
 
-  final MockGameService service;
+  final int participantCount;
+  final int receivedNoteCount;
   final VoidCallback onOpenLetters;
   final VoidCallback onOpenResults;
 
@@ -80,7 +81,10 @@ class FinishedView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 22),
-        _LockedSection(service: service),
+        _LockedSection(
+          participantCount: participantCount,
+          receivedNoteCount: receivedNoteCount,
+        ),
         const SizedBox(height: 22),
         CustomButton(
           label: '쪽지함 들어가기',
@@ -100,9 +104,12 @@ class FinishedView extends StatelessWidget {
 }
 
 class _LockedSection extends StatelessWidget {
-  const _LockedSection({required this.service});
-
-  final MockGameService service;
+  const _LockedSection({
+    required this.participantCount,
+    required this.receivedNoteCount,
+  });
+  final int participantCount;
+  final int receivedNoteCount;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +144,7 @@ class _LockedSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '참여자 ${service.participants.length}명 · 받은 쪽지 ${service.letters.where((n) => n.direction == NoteDirection.received).length}개',
+            '참여자 $participantCount명 · 받은 쪽지 $receivedNoteCount개',
             style: AppTextStyles.caption,
           ),
         ],

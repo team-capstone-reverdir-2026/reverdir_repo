@@ -12,6 +12,8 @@ class AppRoutes {
 
   static const String roomCreate = '/room/create';
   static const String roomJoin = '/room/join';
+  static const String roomJoinProfile = '/room/join/profile';
+  static const String roomJoinMissions = '/room/join/missions';
 
   /// 방 상세·대기·메인 (path param)
   static const String roomDetail = '/room/:roomId';
@@ -27,6 +29,19 @@ class AppRoutes {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   static String roomDetailPath(String roomId) => '/room/$roomId';
+
+  static String roomJoinProfilePath({
+    required String invitationCode,
+    required int missionCount,
+  }) =>
+      '$roomJoinProfile?code=$invitationCode&missionCount=$missionCount';
+
+  static String roomJoinMissionsPath({
+    required String invitationCode,
+    required int missionCount,
+    required String userName,
+  }) =>
+      '$roomJoinMissions?code=$invitationCode&missionCount=$missionCount&userName=$userName';
 
   static String roomMissionsPath(String roomId) => '/room/$roomId/missions';
 

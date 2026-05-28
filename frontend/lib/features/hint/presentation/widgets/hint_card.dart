@@ -22,8 +22,7 @@ class HintCard extends StatefulWidget {
   final String roomId;
   final TodayQuestionViewData data;
 
-  /// TODO: POST .../questions/today/answer 연동
-  final ValueChanged<String>? onAnswerSubmitted;
+  final Future<void> Function(String)? onAnswerSubmitted;
 
   @override
   State<HintCard> createState() => _HintCardState();
@@ -169,7 +168,7 @@ class _AnswerPair extends StatelessWidget {
   final TodayQuestionViewData data;
   final TextEditingController controller;
   final bool compact;
-  final ValueChanged<String>? onAnswerSubmitted;
+  final Future<void> Function(String)? onAnswerSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -198,10 +197,9 @@ class _AnswerPair extends StatelessWidget {
           hint: '답변 쓰기',
           maxLines: 2,
           textInputAction: TextInputAction.done,
-          onSubmitted: (value) {
+          onSubmitted: (value) async {
             if (value.trim().isEmpty) return;
-            onAnswerSubmitted?.call(value.trim());
-            // TODO: POST answer 후 HintProvider 갱신
+            await onAnswerSubmitted?.call(value.trim());
           },
         ),
       );

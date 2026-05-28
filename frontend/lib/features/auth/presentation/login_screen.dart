@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_error_tracker.dart';
+import '../../../core/network/error_handler.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/storage/secure_storage_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -101,6 +102,21 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (!mounted) return;
       context.go(AppRoutes.home);
+    } on ApiException catch (e, s) {
+      final message = e.message.trim().isEmpty
+          ? '로그인에 실패했습니다. 아이디/비밀번호를 확인해 주세요.'
+          : e.message;
+      ApiErrorTracker.logAndBuildMessage(
+        method: 'POST',
+        url: ApiEndpoints.authLogin,
+        error: e,
+        stackTrace: s,
+      );
+      if (!mounted) return;
+      setState(() => _apiError = message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message, style: AppTextStyles.errorMessage)),
+      );
     } catch (e, s) {
       final message = ApiErrorTracker.logAndBuildMessage(
         method: 'POST',

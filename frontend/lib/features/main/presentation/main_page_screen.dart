@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/logout_button.dart';
 import '../../main/data/main_repository.dart';
 import 'widgets/invite_code_dialog.dart';
 
@@ -33,7 +34,10 @@ class _MainPageScreenState extends State<MainPageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('참여 중인 방')),
+      appBar: AppBar(
+        title: const Text('참여 중인 방'),
+        actions: const [LogoutButton(compact: true)],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -113,8 +117,28 @@ class _MainPageScreenState extends State<MainPageScreen> {
       builder: (_) => const InviteCodeDialog(),
     );
     if (code == null || code.length != 6) return;
-    if (!mounted) return;
-    context.push('${AppRoutes.roomJoin}?code=$code');
+    try {
+      final preview = await _repo.previewJoinCode(code);
+      if (!mounted) return;
+      context.push(
+        AppRoutes.roomJoinProfilePath(
+          invitationCode: code,
+          missionCount: preview.missionCount <= 0 ? 1 : preview.missionCount,
+        ),
+      );
+    } catch (e, s) {
+      final message = ApiErrorTracker.logAndBuildMessage(
+        method: 'POST',
+        url: ApiEndpoints.roomsJoin,
+        error: e,
+        stackTrace: s,
+      );
+      if (!mounted) return;
+      setState(() => _apiError = message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message, style: AppTextStyles.errorMessage)),
+      );
+    }
   }
 }
 

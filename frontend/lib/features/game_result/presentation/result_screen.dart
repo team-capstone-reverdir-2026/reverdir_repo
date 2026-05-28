@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/doodle_background.dart';
-import '../../manitto_game/data/mock_game_service.dart';
+import '../../manitto_game/data/game_repository.dart';
 import '../widgets/report_personal.dart';
 import '../widgets/report_reveal.dart';
 
@@ -20,7 +21,19 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   final _controller = PageController();
+  final _repo = const GameRepository();
   int _index = 0;
+  bool _loading = true;
+  String? _error;
+  ManittoPersonData? _myManitto;
+  List<ManittoChainData> _chain = const [];
+  PersonalReportData? _report;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
 
   @override
   void dispose() {
@@ -30,11 +43,14 @@ class _ResultScreenState extends State<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final service = MockGameService.instance;
     return Scaffold(
       appBar: AppBar(title: const Text('결과 리포트')),
       body: DoodleBackground(
-        child: Column(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? Center(child: Text(_error!, style: AppTextStyles.bodyMedium))
+                : Column(
           children: [
             Expanded(
               child: PageView(
@@ -42,14 +58,15 @@ class _ResultScreenState extends State<ResultScreen> {
                 onPageChanged: (value) => setState(() => _index = value),
                 children: [
                   ReportReveal(
-                    service: service,
+                    myManitto: _myManitto!,
+                    chain: _chain,
                     onNext: () => _controller.animateToPage(
                       1,
                       duration: const Duration(milliseconds: 360),
                       curve: Curves.easeOutCubic,
                     ),
                   ),
-                  ReportPersonal(report: service.personalReport),
+                  ReportPersonal(report: _report!),
                 ],
               ),
             ),
@@ -75,5 +92,27 @@ class _ResultScreenState extends State<ResultScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final reveal = await _repo.fetchRevealResult(widget.roomId);
+      final report = await _repo.fetchMyReport(widget.roomId);
+      if (!mounted) return;
+      setState(() {
+        _myManitto = reveal.$1;
+        _chain = reveal.$2;
+        _report = report;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'API 호출/응답 문제: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 }

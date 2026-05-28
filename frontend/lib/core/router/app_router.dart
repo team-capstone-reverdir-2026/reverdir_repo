@@ -11,6 +11,9 @@ import '../../features/letter/presentation/letter_send_screen.dart';
 import '../../features/main/presentation/main_page_screen.dart';
 import '../../features/main/presentation/room_join_preview_screen.dart';
 import '../../features/manitto_game/presentation/game_main_screen.dart';
+import '../../features/room/presentation/mission_input_screen.dart';
+import '../../features/room/presentation/room_create_screen.dart';
+import '../../features/room/presentation/room_join_screen.dart';
 import '../storage/secure_storage_service.dart';
 import 'app_routes.dart';
 
@@ -44,13 +47,45 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.roomCreate,
-      builder: (_, __) => const _PlaceholderScreen(title: '방 만들기'),
+      builder: (_, __) => const RoomCreateScreen(),
     ),
     GoRoute(
       path: AppRoutes.roomJoin,
       builder: (_, state) {
         final code = state.uri.queryParameters['code'] ?? '';
         return RoomJoinPreviewScreen(inviteCode: code);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.roomJoinProfile,
+      builder: (_, state) {
+        final code = state.uri.queryParameters['code'] ?? '';
+        final missionCount = int.tryParse(
+              state.uri.queryParameters['missionCount'] ?? '',
+            ) ??
+            1;
+        return RoomJoinScreen(
+          invitationCode: code,
+          missionCount: missionCount,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.roomJoinMissions,
+      builder: (_, state) {
+        final code = state.uri.queryParameters['code'] ?? '';
+        final missionCount = int.tryParse(
+              state.uri.queryParameters['missionCount'] ?? '',
+            ) ??
+            1;
+        final userName = Uri.decodeComponent(
+          state.uri.queryParameters['userName'] ?? '',
+        );
+        return MissionInputScreen(
+          invitationCode: code,
+          missionCount: missionCount,
+          userName: userName,
+        );
       },
     ),
     GoRoute(

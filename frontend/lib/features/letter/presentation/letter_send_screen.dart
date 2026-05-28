@@ -7,7 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/doodle_background.dart';
-import '../../manitto_game/data/mock_game_service.dart';
+import '../data/letter_repository.dart';
 
 const double _notebookFontSize = 17.5;
 const double _notebookLineHeight = 30.0;
@@ -26,6 +26,8 @@ class LetterSendScreen extends StatefulWidget {
 
 class _LetterSendScreenState extends State<LetterSendScreen> {
   final _controller = TextEditingController();
+  final _repo = const LetterRepository();
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -35,9 +37,6 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final service = MockGameService.instance;
-    final isLocked = service.phase == GamePhase.finished;
-
     return Scaffold(
       appBar: AppBar(title: const Text('쪽지 쓰기')),
       body: DoodleBackground(
@@ -89,7 +88,7 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
                             padding: const EdgeInsets.fromLTRB(12, 6, 8, 8),
                             child: TextField(
                               controller: _controller,
-                              enabled: !isLocked,
+                              enabled: !_submitting,
                               maxLines: null,
                               expands: true,
                               keyboardType: TextInputType.multiline,
@@ -105,8 +104,8 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
                                 color: AppColors.CTextPrimary,
                               ),
                               decoration: InputDecoration(
-                                hintText: isLocked
-                                    ? '종료된 방에서는 새 쪽지를 보낼 수 없어요.'
+                                hintText: _submitting
+                                    ? '전송 중이에요...'
                                     : '마니띠에게 따뜻한 쪽지를 남겨보세요...',
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
@@ -155,19 +154,28 @@ class _LetterSendScreenState extends State<LetterSendScreen> {
               ),
               const SizedBox(height: 16),
               CustomButton(
-                label: isLocked ? '쪽지 보내기 잠김' : '쪽지 보내기',
-                isEnabled: !isLocked,
-                onPressed: isLocked
+                label: _submitting ? '전송 중...' : '쪽지 보내기',
+                isEnabled: !_submitting,
+                onPressed: _submitting
                     ? null
-                    : () {
+                    : () async {
                         final text = _controller.text.trim();
                         if (text.isEmpty) {
                           context.showErrorSnackBar('쪽지 내용을 입력해 주세요.');
                           return;
                         }
-                        service.sendLetter(text);
-                        context.showSnackBar('쪽지를 보냈어요!');
-                        context.pop();
+                        try {
+                          setState(() => _submitting = true);
+                          await _repo.send(widget.roomId, text);
+                          if (!mounted) return;
+                          context.showSnackBar('쪽지를 보냈어요!');
+                          context.pop();
+                        } catch (e) {
+                          if (!mounted) return;
+                          context.showErrorSnackBar('API 호출/응답 문제: $e');
+                        } finally {
+                          if (mounted) setState(() => _submitting = false);
+                        }
                       },
                 width: double.infinity,
               ),
