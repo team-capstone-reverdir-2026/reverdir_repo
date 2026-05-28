@@ -1,12 +1,10 @@
-import 'dart:math' as math;
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/network/error_handler.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/washi_tape.dart';
 
 class RoomDateTimePicker extends StatefulWidget {
   const RoomDateTimePicker({
@@ -45,10 +43,12 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
   @override
   void didUpdateWidget(covariant RoomDateTimePicker oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.selectedDate != null && widget.selectedDate != oldWidget.selectedDate) {
+    if (widget.selectedDate != null &&
+        widget.selectedDate != oldWidget.selectedDate) {
       _selectedDate = widget.selectedDate!;
     }
-    if (widget.selectedTime != null && widget.selectedTime != oldWidget.selectedTime) {
+    if (widget.selectedTime != null &&
+        widget.selectedTime != oldWidget.selectedTime) {
       _selectedTime = widget.selectedTime!;
     }
   }
@@ -106,24 +106,76 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
     await _syncToServerIfNeeded();
   }
 
-  Future<void> _openTimePickerPopup(BuildContext context) async {
-    final picked = await showTimePicker(
+  Future<void> _openTimeScrollPicker(BuildContext context) async {
+    var temp = DateTime(
+      2020,
+      1,
+      1,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    final picked = await showModalBottomSheet<TimeOfDay>(
       context: context,
-      initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.CRed,
-              onPrimary: AppColors.CBackground,
-              surface: AppColors.CIvory,
-              onSurface: AppColors.CTextPrimary,
-            ),
+      backgroundColor: AppColors.CIvory,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+                child: Row(
+                  children: [
+                    Text('시간 선택', style: AppTextStyles.titleSmall),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      child: const Text('취소'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(
+                          sheetContext,
+                          TimeOfDay(hour: temp.hour, minute: temp.minute),
+                        );
+                      },
+                      child: const Text('확인'),
+                    ),
+                  ],
+                ),
+              ),
+              ClipRect(
+                child: SizedBox(
+                height: 160,
+                child: CupertinoTheme(
+                  data: const CupertinoThemeData(
+                    textTheme: CupertinoTextThemeData(
+                      dateTimePickerTextStyle: TextStyle(
+                        fontSize: 22,
+                        color: AppColors.CTextPrimary,
+                      ),
+                    ),
+                  ),
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.time,
+                    use24hFormat: true,
+                    initialDateTime: temp,
+                    onDateTimeChanged: (value) => temp = value,
+                  ),
+                ),
+              ),
+              ),
+              const SizedBox(height: 8),
+            ],
           ),
-          child: child ?? const SizedBox.shrink(),
         );
       },
     );
+
     if (picked == null) return;
     setState(() => _selectedTime = picked);
     widget.onTimeSelected(picked);
@@ -135,59 +187,26 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Transform.rotate(
-          angle: 0.006,
-          child: Stack(
-            clipBehavior: Clip.none,
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.CYellow.withValues(alpha: 0.24),
+            borderRadius: BorderRadius.circular(22),
+            border: AppTheme.handDrawnBorder(color: AppColors.CBrown),
+          ),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.CYellow.withValues(alpha: 0.42),
-                      AppColors.CPink.withValues(alpha: 0.25),
-                      AppColors.CIvory,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(22),
-                  border: AppTheme.handDrawnBorder(color: AppColors.CBrown),
-                ),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _TiltedKitschButton(
-                      label: '날짜 ${_dateLabel(_selectedDate)}',
-                      color: AppColors.CYellow.withValues(alpha: 0.65),
-                      onTap: () => _openDatePickerPopup(context),
-                    ),
-                    _TiltedKitschButton(
-                      label: '시간 ${_timeLabel(_selectedTime)}',
-                      color: AppColors.CSkyBlue.withValues(alpha: 0.6),
-                      onTap: () => _openTimePickerPopup(context),
-                    ),
-                  ],
-                ),
+              _PickerButton(
+                label: '날짜 ${_dateLabel(_selectedDate)}',
+                color: AppColors.CSkyBlue.withValues(alpha: 0.28),
+                onTap: () => _openDatePickerPopup(context),
               ),
-              Positioned(
-                top: -8,
-                right: 16,
-                child: WashiTape.horizontal(
-                  color: WashiTapeColor.orange,
-                  width: 74,
-                  rotation: 8,
-                ),
-              ),
-              const Positioned(
-                left: 10,
-                top: 6,
-                child: Icon(Icons.auto_awesome, color: AppColors.COrange, size: 16),
-              ),
-              const Positioned(
-                right: 10,
-                bottom: 8,
-                child: Icon(Icons.favorite, color: AppColors.CPink, size: 15),
+              _PickerButton(
+                label: '시간 ${_timeLabel(_selectedTime)}',
+                color: AppColors.CPink.withValues(alpha: 0.24),
+                onTap: () => _openTimeScrollPicker(context),
               ),
             ],
           ),
@@ -204,8 +223,8 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
   }
 }
 
-class _TiltedKitschButton extends StatelessWidget {
-  const _TiltedKitschButton({
+class _PickerButton extends StatelessWidget {
+  const _PickerButton({
     required this.label,
     required this.color,
     required this.onTap,
@@ -217,24 +236,21 @@ class _TiltedKitschButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: -1.5 * math.pi / 180,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(20),
-              border: AppTheme.handDrawnBorder(color: AppColors.CBrown, width: 1.3),
-            ),
-            child: Text(
-              label,
-              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(20),
+            border: AppTheme.handDrawnBorder(color: AppColors.CBrown, width: 1.3),
+          ),
+          child: Text(
+            label,
+            style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
       ),

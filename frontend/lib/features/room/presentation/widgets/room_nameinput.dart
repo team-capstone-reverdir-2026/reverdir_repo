@@ -28,12 +28,7 @@ class RoomNameInput extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.CSkyBlue.withValues(alpha: 0.26),
-            AppColors.CIvory,
-          ],
-        ),
+        color: AppColors.CSkyBlue.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(20),
         border: AppTheme.handDrawnBorder(color: AppColors.CSkyBlue),
       ),

@@ -72,13 +72,7 @@ class _MissionCountSelectorState extends State<MissionCountSelector>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.CPink.withValues(alpha: 0.35),
-                AppColors.CYellow.withValues(alpha: 0.28),
-                AppColors.CIvory,
-              ],
-            ),
+            color: AppColors.CYellow.withValues(alpha: 0.24),
             borderRadius: BorderRadius.circular(18),
             border: AppTheme.handDrawnBorder(color: AppColors.CBrown, width: 1.2),
           ),

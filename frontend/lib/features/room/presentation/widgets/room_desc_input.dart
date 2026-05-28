@@ -51,7 +51,14 @@ class _RoomDescInputState extends State<RoomDescInput> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.CPink.withValues(alpha: 0.20),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.CPink.withValues(alpha: 0.55), width: 1.3),
+      ),
+      child: TextField(
       controller: widget.controller,
       enabled: widget.enabled,
       minLines: 3,
@@ -64,7 +71,7 @@ class _RoomDescInputState extends State<RoomDescInput> {
         counterText: '',
         alignLabelWithHint: true,
         filled: true,
-        fillColor: AppColors.CIvory,
+        fillColor: AppColors.CBackground.withValues(alpha: 0.9),
         hintText: '어떤 사람들과의 모임인지 입력해 주세요',
         hintStyle: AppTextStyles.bodySmall.copyWith(
           color: AppColors.CTextTertiary,
@@ -93,6 +100,7 @@ class _RoomDescInputState extends State<RoomDescInput> {
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         errorText: _errorText,
         errorStyle: AppTextStyles.caption.copyWith(color: AppColors.CRed),
+      ),
       ),
     );
   }

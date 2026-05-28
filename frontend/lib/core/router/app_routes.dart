@@ -31,17 +31,22 @@ class AppRoutes {
   static String roomDetailPath(String roomId) => '/room/$roomId';
 
   static String roomJoinProfilePath({
+    required String roomId,
     required String invitationCode,
     required int missionCount,
   }) =>
-      '$roomJoinProfile?code=$invitationCode&missionCount=$missionCount';
+      '$roomJoinProfile?roomId=${Uri.encodeComponent(roomId)}'
+      '&code=${Uri.encodeComponent(invitationCode)}'
+      '&missionCount=$missionCount';
 
   static String roomJoinMissionsPath({
-    required String invitationCode,
+    required String roomId,
     required int missionCount,
     required String userName,
   }) =>
-      '$roomJoinMissions?code=$invitationCode&missionCount=$missionCount&userName=$userName';
+      '$roomJoinMissions?roomId=${Uri.encodeComponent(roomId)}'
+      '&missionCount=$missionCount'
+      '&userName=${Uri.encodeComponent(userName)}';
 
   static String roomMissionsPath(String roomId) => '/room/$roomId/missions';
 
