@@ -145,6 +145,23 @@ class _GameMainScreenState extends State<GameMainScreen> {
       RoomStatus.inProgress => GamePhase.inProgress,
       RoomStatus.ended => GamePhase.finished,
     };
+    // #region agent log
+    if (phase == GamePhase.preStart) {
+      AgentDebugLog.log(
+        location: 'game_main_screen.dart:_buildBody',
+        message: 'preStart phase data types',
+        hypothesisId: 'H12,H19',
+        data: {
+          'participantsLen': _participants.length,
+          'draftMissionsLen': _draftMissions.length,
+          'participantsListType': _participants.runtimeType.toString(),
+          'draftMissionsListType': _draftMissions.runtimeType.toString(),
+          'isHost': detail.isHost,
+          'isHostType': detail.isHost.runtimeType.toString(),
+        },
+      );
+    }
+    // #endregion
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 350),
       switchInCurve: Curves.easeOutCubic,
@@ -247,7 +264,9 @@ class _GameMainScreenState extends State<GameMainScreen> {
         _participants = participants;
         _maxMissionCount = maxCount;
         _draftMissions = missionData.missions
-            .map((m) => EditableMission(id: m.id, content: m.content))
+            .map<EditableMission>(
+              (m) => EditableMission(id: m.id, content: m.content),
+            )
             .toList(growable: false);
         _todayQuestion = question;
         _myManittiName = myManitti;
@@ -338,7 +357,9 @@ class _GameMainScreenState extends State<GameMainScreen> {
         _participants = participants;
         _maxMissionCount = maxCount;
         _draftMissions = missionData.missions
-            .map((m) => EditableMission(id: m.id, content: m.content))
+            .map<EditableMission>(
+              (m) => EditableMission(id: m.id, content: m.content),
+            )
             .toList(growable: false);
         _missionProvider.setMissions(missionData.missions);
       });

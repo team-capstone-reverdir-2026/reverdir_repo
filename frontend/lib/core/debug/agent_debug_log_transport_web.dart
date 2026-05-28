@@ -5,15 +5,13 @@ const _endpoint =
 
 /// Flutter Web: POST NDJSON line to local debug ingest.
 void postDebugLog(String line) {
-  try {
-    HttpRequest.request(
-      _endpoint,
-      method: 'POST',
-      requestHeaders: {
-        'Content-Type': 'application/json',
-        'X-Debug-Session-Id': '45384d',
-      },
-      sendData: line,
-    );
-  } catch (_) {}
+  HttpRequest.request(
+    _endpoint,
+    method: 'POST',
+    requestHeaders: {
+      'Content-Type': 'application/json',
+      'X-Debug-Session-Id': '45384d',
+    },
+    sendData: line,
+  ).catchError((_) => null);
 }
