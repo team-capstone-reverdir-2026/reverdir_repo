@@ -6,6 +6,9 @@ import com.reverdir.tomanito.note.domain.Note;
 import com.reverdir.tomanito.note.repository.NoteRepository;
 import com.reverdir.tomanito.participant.domain.Participant;
 import com.reverdir.tomanito.participant.repository.ParticipantRepository;
+import com.reverdir.tomanito.report.ParticipantReportRepository;
+import com.reverdir.tomanito.report.domain.ParticipantReport;
+import com.reverdir.tomanito.report.domain.ReportStatus;
 import com.reverdir.tomanito.result.CharacterType;
 import com.reverdir.tomanito.result.dto.ManittoChainItem;
 import com.reverdir.tomanito.result.dto.ManittoRevealResult;
@@ -25,6 +28,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +37,7 @@ public class ResultService {
     private final RoomRepository roomRepository;
     private final ParticipantRepository participantRepository;
     private final NoteRepository noteRepository;
+    private final ParticipantReportRepository participantReportRepository;
     private final RestClient restClient = RestClient.builder().build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -72,10 +77,25 @@ public class ResultService {
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public MyReportResponse getMyReport(Long userId, Long roomId) {
         Participant participant = participantRepository.findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        Optional<ParticipantReport> existingReport = participantReportRepository
+                .findByParticipant(participant);
+
+        Room room = roomRepository.findById(roomId).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        if (existingReport.isPresent()) {
+            ParticipantReport report = existingReport.get();
+            return MyReportResponse.builder()
+                    .status("READY")
+                    .typeName(report.getTypeName())
+                    .typeImageUrl(report.getTypeImageUrl())
+                    .storyText(report.getStoryText())
+                    .build();
+        }
 
         List<Note> sentNotes = noteRepository.findAllBySender(participant);
 
@@ -112,11 +132,22 @@ public class ResultService {
         // 4. Gemini 2.5 Flash 호출
         String storyText = callGeminiApi(prompt);
 
-        return MyReportResponse.builder()
-                .status("READY")
+        ParticipantReport newReport = ParticipantReport.builder()
+                .participant(participant)
+                .room(room)
+                .status(ReportStatus.READY)
                 .typeName(determinedType.getName())
                 .typeImageUrl(determinedType.getImageUrl())
                 .storyText(storyText)
+                .build();
+
+        participantReportRepository.save(newReport);
+
+        return MyReportResponse.builder()
+                .status("READY")
+                .typeName(newReport.getTypeName())
+                .typeImageUrl(newReport.getTypeImageUrl())
+                .storyText(newReport.getStoryText())
                 .build();
     }
 

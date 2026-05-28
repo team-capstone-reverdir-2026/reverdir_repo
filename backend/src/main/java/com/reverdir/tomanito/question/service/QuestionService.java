@@ -141,9 +141,9 @@ public class QuestionService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        if (room.getStatus() != RoomStatus.IN_PROGRESS) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
+//        if (room.getStatus() != RoomStatus.IN_PROGRESS) {
+//            throw new CustomException(ErrorCode.FORBIDDEN);
+//        }
 
         return participantRepository.findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN));
