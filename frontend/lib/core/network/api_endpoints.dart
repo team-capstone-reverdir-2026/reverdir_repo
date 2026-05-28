@@ -6,7 +6,7 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // ── Servers (openapi servers[]) ─────────────────────────────────────────
-  static const String productionBaseUrl = 'https://api.manitto.app/v1';
+  static const String productionBaseUrl = 'https://tomanito-backend.onrender.com/v1';
   static const String developmentBaseUrl = 'https://dev-api.manitto.app/v1';
   static const String localBaseUrl = 'http://localhost:8080/v1';
 
