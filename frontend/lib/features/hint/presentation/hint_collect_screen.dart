@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../../core/widgets/washi_tape.dart';
 import '../../../core/network/api_enums.dart';
@@ -65,7 +66,11 @@ class _HintCollectScreenState extends State<HintCollectScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('힌트 답변 모음')),
+      appBar: AppBar(
+        title: const Text('힌트 답변 모음'),
+        leading: const AppBackButton(),
+        automaticallyImplyLeading: false,
+      ),
       body: DoodleBackground(
         child: _loading
             ? const Center(child: CircularProgressIndicator())

@@ -8,8 +8,10 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../hint/provider/hint_provider.dart';
+import '../../room/data/room_invite_code_cache.dart';
 import '../../mission/provider/mission_provider.dart';
 import '../data/game_repository.dart';
 import 'widgets/finished_view.dart';
@@ -26,10 +28,12 @@ class GameMainScreen extends StatefulWidget {
     super.key,
     required this.roomId,
     this.myDisplayName,
+    this.inviteCodeQuery,
   });
 
   final String roomId;
   final String? myDisplayName;
+  final String? inviteCodeQuery;
 
   @override
   State<GameMainScreen> createState() => _GameMainScreenState();
@@ -47,6 +51,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
   int _maxMissionCount = 0;
   TodayQuestionViewData? _todayQuestion;
   String? _myManittiName;
+  String _resolvedInviteCode = '';
 
   @override
   void initState() {
@@ -71,6 +76,11 @@ class _GameMainScreenState extends State<GameMainScreen> {
                 : Stack(
                     children: [
                       _buildBody(),
+                      SafeArea(
+                        child: AppBackButtonOverlay(
+                          onPressed: () => context.go(AppRoutes.home),
+                        ),
+                      ),
                       if ((_detail?.status ?? RoomStatus.waiting) ==
                           RoomStatus.inProgress)
                         Positioned(
@@ -104,7 +114,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
             key: ValueKey('preStart_${_draftMissions.length}_$_maxMissionCount'),
             roomName: detail.name,
             roomDescription: detail.description,
-            inviteCode: detail.inviteCode ?? '',
+            inviteCode: _resolvedInviteCode,
             maxMissionCount: _maxMissionCount,
             isHost: detail.isHost,
             participants: _participants,
@@ -177,6 +187,15 @@ class _GameMainScreenState extends State<GameMainScreen> {
           ? missionData.maxCount
           : detail.missionCount;
 
+      final inviteCode = RoomInviteCodeCache.resolve(
+        roomId: widget.roomId,
+        fromApi: detail.inviteCode,
+        fromQuery: widget.inviteCodeQuery,
+      );
+      if (inviteCode.isNotEmpty) {
+        RoomInviteCodeCache.save(widget.roomId, inviteCode);
+      }
+
       if (!mounted) return;
       setState(() {
         _detail = detail;
@@ -188,6 +207,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
             .toList(growable: false);
         _todayQuestion = question;
         _myManittiName = myManitti;
+        _resolvedInviteCode = inviteCode;
       });
     } catch (e, s) {
       final message = ApiErrorTracker.logAndBuildMessage(
@@ -210,17 +230,48 @@ class _GameMainScreenState extends State<GameMainScreen> {
 
   Future<void> _addMission(String content) async {
     await _repo.addMission(widget.roomId, content);
-    await _load();
+    await _refreshMissionsOnly();
   }
 
   Future<void> _updateMission(String missionId, String content) async {
     await _repo.patchMission(widget.roomId, missionId, content: content);
-    await _load();
+    await _refreshMissionsOnly();
   }
 
   Future<void> _deleteMission(String missionId) async {
     await _repo.deleteMission(widget.roomId, missionId);
-    await _load();
+    await _refreshMissionsOnly();
+  }
+
+  Future<void> _refreshMissionsOnly() async {
+    try {
+      final participants = await _repo.fetchParticipants(widget.roomId);
+      final missionData = await _repo.fetchMissions(widget.roomId);
+      final maxCount = missionData.maxCount > 0
+          ? missionData.maxCount
+          : (_detail?.missionCount ?? _maxMissionCount);
+
+      if (!mounted) return;
+      setState(() {
+        _participants = participants;
+        _missions = missionData.missions;
+        _maxMissionCount = maxCount;
+        _draftMissions = missionData.missions
+            .map((m) => EditableMission(id: m.id, content: m.content))
+            .toList(growable: false);
+      });
+    } catch (e, s) {
+      final message = ApiErrorTracker.logAndBuildMessage(
+        method: 'GET',
+        url: ApiEndpoints.roomMissions(widget.roomId),
+        error: e,
+        stackTrace: s,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 
   Future<void> _submitTodayAnswer(String content) async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../manitto_game/data/game_repository.dart';
 import '../widgets/report_personal.dart';
@@ -46,7 +47,11 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('결과 리포트')),
+      appBar: AppBar(
+        title: const Text('결과 리포트'),
+        leading: const AppBackButton(),
+        automaticallyImplyLeading: false,
+      ),
       body: DoodleBackground(
         child: _loadingReveal
             ? const Center(child: CircularProgressIndicator())

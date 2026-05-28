@@ -9,6 +9,8 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_enums.dart';
 import '../../../core/network/error_handler.dart';
 import '../../../core/router/app_routes.dart';
+import '../../../core/widgets/app_back_button.dart';
+import '../data/room_invite_code_cache.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/tomato_mascot.dart';
@@ -99,6 +101,7 @@ class _RoomCreateScreenState extends State<RoomCreateScreen> {
       }
 
       if (inviteCode.isNotEmpty) {
+        RoomInviteCodeCache.save(roomId, inviteCode);
         context.push(
           AppRoutes.roomJoinProfilePath(
             roomId: roomId,
@@ -157,6 +160,8 @@ class _RoomCreateScreenState extends State<RoomCreateScreen> {
         backgroundColor: const Color(0xFFFDF5E6),
         elevation: 0,
         scrolledUnderElevation: 0,
+        leading: const AppBackButton(),
+        automaticallyImplyLeading: false,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: const [

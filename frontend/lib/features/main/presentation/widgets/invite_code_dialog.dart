@@ -6,7 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
 
-/// 초대 코드 6자리 — 단일 [TextField] + 표시 칸(OTP) 패턴.
+/// 초대 코드 6자리 — 표시 칸 + 전체 영역 투명 입력.
 class InviteCodeDialog extends StatefulWidget {
   const InviteCodeDialog({super.key});
 
@@ -47,7 +47,7 @@ class _InviteCodeDialogState extends State<InviteCodeDialog> {
       shape: RoundedRectangleBorder(borderRadius: AppTheme.borderRadius),
       title: Text('초대 코드 입력', style: AppTextStyles.titleSmall),
       content: SizedBox(
-        width: 280,
+        width: 300,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -57,84 +57,104 @@ class _InviteCodeDialogState extends State<InviteCodeDialog> {
                 color: AppColors.CTextSecondary,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             GestureDetector(
               onTap: () => _focusNode.requestFocus(),
               behavior: HitTestBehavior.opaque,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_codeLength, (index) {
-                      final char =
-                          index < code.length ? code[index] : null;
-                      final isActive =
-                          hasFocus && index == code.length.clamp(0, _codeLength);
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: _CodeCell(
-                          char: char,
-                          isActive: isActive,
-                          isFilled: char != null,
+              child: SizedBox(
+                width: double.infinity,
+                height: 58,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_codeLength, (index) {
+                        final char =
+                            index < code.length ? code[index] : null;
+                        final isActive = hasFocus &&
+                            index == code.length.clamp(0, _codeLength);
+                        return Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 4),
+                          child: _CodeCell(
+                            char: char,
+                            isActive: isActive,
+                            isFilled: char != null,
+                          ),
+                        );
+                      }),
+                    ),
+                    Positioned.fill(
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        autofocus: true,
+                        keyboardType: TextInputType.visiblePassword,
+                        textCapitalization: TextCapitalization.characters,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        showCursor: false,
+                        enableInteractiveSelection: true,
+                        style: const TextStyle(
+                          color: Colors.transparent,
+                          fontSize: 24,
+                          height: 1,
                         ),
-                      );
-                    }),
-                  ),
-                  TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    autofocus: true,
-                    keyboardType: TextInputType.visiblePassword,
-                    textCapitalization: TextCapitalization.characters,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    maxLength: _codeLength,
-                    style: const TextStyle(
-                      color: Colors.transparent,
-                      fontSize: 1,
-                      height: 1,
-                    ),
-                    cursorColor: Colors.transparent,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      counterText: '',
-                      contentPadding: EdgeInsets.zero,
-                      isCollapsed: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'[A-Za-z0-9]'),
+                        cursorColor: Colors.transparent,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          filled: false,
+                          isCollapsed: true,
+                          contentPadding: EdgeInsets.zero,
+                          counterText: '',
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'[A-Za-z0-9]'),
+                          ),
+                          LengthLimitingTextInputFormatter(_codeLength),
+                          _UpperCaseFormatter(),
+                        ],
+                        onChanged: (_) => setState(() {}),
+                        onSubmitted: (_) {
+                          if (_code.length == _codeLength) {
+                            Navigator.pop(context, _code);
+                          }
+                        },
                       ),
-                      LengthLimitingTextInputFormatter(_codeLength),
-                      _UpperCaseFormatter(),
-                    ],
-                    onChanged: (_) => setState(() {}),
-                    onSubmitted: (_) {
-                      if (_code.length == _codeLength) {
-                        Navigator.pop(context, _code);
-                      }
-                    },
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('취소'),
+                ),
+                const SizedBox(width: 12),
+                CustomButton(
+                  label: '입장',
+                  onPressed: _code.length == _codeLength
+                      ? () => Navigator.pop(context, _code)
+                      : null,
+                  width: 120,
+                ),
+              ],
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
-        CustomButton(
-          label: '입장',
-          onPressed: _code.length == _codeLength
-              ? () => Navigator.pop(context, _code)
-              : null,
-          width: 120,
-        ),
-      ],
+      actions: const [],
     );
   }
 }
@@ -152,8 +172,7 @@ class _CodeCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
+    return Container(
       width: 40,
       height: 52,
       alignment: Alignment.center,

@@ -258,13 +258,15 @@ class _RoomIntro extends StatelessWidget {
                     color: AppColors.CTextSecondary,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  '초대 코드 $inviteCode',
-                  style: AppTextStyles.statusBadge.copyWith(
-                    color: AppColors.CRed,
+                if (inviteCode.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    '초대 코드 $inviteCode',
+                    style: AppTextStyles.statusBadge.copyWith(
+                      color: AppColors.CRed,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

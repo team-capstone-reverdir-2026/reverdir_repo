@@ -22,9 +22,8 @@ class MyApp extends StatelessWidget {
       routerConfig: appRouter,
       theme: AppTheme.light,
       builder: (context, child) {
-        return Container(
-          color: Colors.grey[900],
-          alignment: Alignment.center,
+        return ColoredBox(
+          color: AppTheme.light.scaffoldBackgroundColor,
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 430),

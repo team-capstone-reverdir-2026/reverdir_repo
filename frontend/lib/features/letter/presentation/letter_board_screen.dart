@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/washi_tape.dart';
 import '../data/letter_repository.dart';
 
@@ -48,6 +49,8 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('쪽지함'),
+        leading: const AppBackButton(),
+        automaticallyImplyLeading: false,
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.CRed,

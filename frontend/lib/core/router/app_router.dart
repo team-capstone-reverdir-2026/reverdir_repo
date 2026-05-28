@@ -81,10 +81,12 @@ final GoRouter appRouter = GoRouter(
             ) ??
             1;
         final userName = state.uri.queryParameters['userName'] ?? '';
+        final invitationCode = state.uri.queryParameters['code'] ?? '';
         return MissionInputScreen(
           roomId: roomId,
           missionCount: missionCount,
           userName: userName,
+          invitationCode: invitationCode,
         );
       },
     ),
@@ -93,11 +95,14 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final roomId = state.pathParameters['roomId'] ?? '';
         final displayName = state.uri.queryParameters['displayName']?.trim();
+        final inviteCode = state.uri.queryParameters['inviteCode']?.trim();
         return GameMainScreen(
           key: ValueKey(state.uri.toString()),
           roomId: roomId,
           myDisplayName:
               displayName == null || displayName.isEmpty ? null : displayName,
+          inviteCodeQuery:
+              inviteCode == null || inviteCode.isEmpty ? null : inviteCode,
         );
       },
       routes: [

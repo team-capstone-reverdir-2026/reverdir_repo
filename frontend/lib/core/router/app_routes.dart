@@ -28,7 +28,21 @@ class AppRoutes {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  static String roomDetailPath(String roomId) => '/room/$roomId';
+  static String roomDetailPath(
+    String roomId, {
+    String? displayName,
+    String? inviteCode,
+  }) {
+    final params = <String>[];
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      params.add('displayName=${Uri.encodeComponent(displayName.trim())}');
+    }
+    if (inviteCode != null && inviteCode.trim().isNotEmpty) {
+      params.add('inviteCode=${Uri.encodeComponent(inviteCode.trim())}');
+    }
+    if (params.isEmpty) return '/room/$roomId';
+    return '/room/$roomId?${params.join('&')}';
+  }
 
   static String roomJoinProfilePath({
     required String roomId,
@@ -43,10 +57,16 @@ class AppRoutes {
     required String roomId,
     required int missionCount,
     required String userName,
-  }) =>
-      '$roomJoinMissions?roomId=${Uri.encodeComponent(roomId)}'
-      '&missionCount=$missionCount'
-      '&userName=${Uri.encodeComponent(userName)}';
+    String? invitationCode,
+  }) {
+    final base =
+        '$roomJoinMissions?roomId=${Uri.encodeComponent(roomId)}'
+        '&missionCount=$missionCount'
+        '&userName=${Uri.encodeComponent(userName)}';
+    final code = invitationCode?.trim();
+    if (code == null || code.isEmpty) return base;
+    return '$base&code=${Uri.encodeComponent(code)}';
+  }
 
   static String roomMissionsPath(String roomId) => '/room/$roomId/missions';
 
