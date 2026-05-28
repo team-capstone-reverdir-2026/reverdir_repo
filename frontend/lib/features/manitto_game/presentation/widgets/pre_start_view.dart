@@ -307,9 +307,7 @@ class _ParticipantsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: 0.014,
-      child: Container(
+    return Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: AppColors.CSkyBlue.withValues(alpha: 0.22),
@@ -373,7 +371,6 @@ class _ParticipantsCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

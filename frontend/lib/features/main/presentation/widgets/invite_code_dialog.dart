@@ -7,9 +7,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
 
 /// 초대 코드 6자리 — 단일 [TextField] + 표시 칸(OTP) 패턴.
-///
-/// 6개의 분리된 [TextField]는 다이얼로그·maxLength 조합에서
-/// 입력이 보이지 않거나 포커스가 안 잡히는 경우가 있어 이 방식을 씁니다.
 class InviteCodeDialog extends StatefulWidget {
   const InviteCodeDialog({super.key});
 
@@ -84,7 +81,6 @@ class _InviteCodeDialogState extends State<InviteCodeDialog> {
                       );
                     }),
                   ),
-                  // 실제 입력은 투명 TextField가 받음 → 키보드·붙여넣기·숫자 입력 모두 동작
                   TextField(
                     controller: _controller,
                     focusNode: _focusNode,

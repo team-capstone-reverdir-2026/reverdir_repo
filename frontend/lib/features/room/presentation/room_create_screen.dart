@@ -1,4 +1,6 @@
 import 'dart:developer' as developer;
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,7 +11,6 @@ import '../../../core/network/error_handler.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/custom_button.dart';
-import '../../../core/widgets/doodle_background.dart';
 import '../../../core/widgets/tomato_mascot.dart';
 import 'widgets/mission_count_selector.dart';
 import 'widgets/room_date_time_picker.dart';
@@ -165,8 +166,7 @@ class _RoomCreateScreenState extends State<RoomCreateScreen> {
           ],
         ),
       ),
-      body: DoodleBackground(
-        child: SafeArea(
+      body: SafeArea(
         child: Column(
           children: [
             Expanded(
@@ -185,10 +185,13 @@ class _RoomCreateScreenState extends State<RoomCreateScreen> {
                     const SizedBox(height: 20),
                     Text('방 소개', style: AppTextStyles.titleSmall),
                     const SizedBox(height: 8),
-                    RoomDescInput(
-                      controller: _descController,
-                      apiException: _descError,
-                      onChanged: (_) => setState(() => _descError = null),
+                    Transform.rotate(
+                      angle: -1.5 * math.pi / 180,
+                      child: RoomDescInput(
+                        controller: _descController,
+                        apiException: _descError,
+                        onChanged: (_) => setState(() => _descError = null),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Text('종료 일시', style: AppTextStyles.titleSmall),
@@ -231,7 +234,6 @@ class _RoomCreateScreenState extends State<RoomCreateScreen> {
               ),
             ),
           ],
-        ),
         ),
       ),
     );

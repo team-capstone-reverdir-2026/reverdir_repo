@@ -59,7 +59,9 @@ class _ResultScreenState extends State<ResultScreen> {
                           controller: _controller,
                           onPageChanged: (value) {
                             setState(() => _index = value);
-                            if (value == 1 && _report == null && !_loadingReport) {
+                            if (value == 1 &&
+                                _report == null &&
+                                !_loadingReport) {
                               _loadPersonalReport();
                             }
                           },

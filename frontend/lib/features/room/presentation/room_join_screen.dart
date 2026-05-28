@@ -50,6 +50,13 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
       return;
     }
 
+    if (widget.roomId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('방 정보가 없습니다. 초대 코드부터 다시 시도해 주세요.')),
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
     try {
       await apiClient.post<Map<String, dynamic>>(
@@ -77,23 +84,13 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
         );
         return;
       }
-      developer.log(
-        '참여자 등록 실패',
-        name: 'ReverdirApi',
-        error: e,
-        stackTrace: s,
-      );
+      developer.log('참여자 등록 실패', name: 'ReverdirApi', error: e, stackTrace: s);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message)),
       );
     } catch (e, s) {
-      developer.log(
-        '참여자 등록 실패',
-        name: 'ReverdirApi',
-        error: e,
-        stackTrace: s,
-      );
+      developer.log('참여자 등록 실패', name: 'ReverdirApi', error: e, stackTrace: s);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('입장에 실패했습니다. 다시 시도해 주세요.')),

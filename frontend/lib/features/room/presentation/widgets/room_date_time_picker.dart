@@ -1,10 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/network/error_handler.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_theme.dart';
 
 class RoomDateTimePicker extends StatefulWidget {
   const RoomDateTimePicker({
@@ -30,28 +31,9 @@ class RoomDateTimePicker extends StatefulWidget {
 
 class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
   String? _errorText;
-  late DateTime _selectedDate;
-  late TimeOfDay _selectedTime;
 
-  @override
-  void initState() {
-    super.initState();
-    _selectedDate = widget.selectedDate ?? DateTime.now();
-    _selectedTime = widget.selectedTime ?? TimeOfDay.now();
-  }
-
-  @override
-  void didUpdateWidget(covariant RoomDateTimePicker oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.selectedDate != null &&
-        widget.selectedDate != oldWidget.selectedDate) {
-      _selectedDate = widget.selectedDate!;
-    }
-    if (widget.selectedTime != null &&
-        widget.selectedTime != oldWidget.selectedTime) {
-      _selectedTime = widget.selectedTime!;
-    }
-  }
+  DateTime get _safeDate => widget.selectedDate ?? DateTime.now();
+  TimeOfDay get _safeTime => widget.selectedTime ?? TimeOfDay.now();
 
   String _dateLabel(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
@@ -63,7 +45,7 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
     if (widget.onSyncToServer == null) return;
     try {
       setState(() => _errorText = null);
-      await widget.onSyncToServer!(_selectedDate, _selectedTime);
+      await widget.onSyncToServer!(_safeDate, _safeTime);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _errorText = 'API 호출/응답 문제: ${e.message}');
@@ -74,112 +56,55 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
   }
 
   Future<void> _openDatePickerPopup(BuildContext context) async {
-    final picked = await showDatePicker(
+    var tempDate = _safeDate;
+    await showCupertinoModalPopup<void>(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 3650)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.CRed,
-              onPrimary: AppColors.CBackground,
-              surface: AppColors.CIvory,
-              onSurface: AppColors.CTextPrimary,
-            ),
-            dialogTheme: DialogThemeData(
-              backgroundColor: AppColors.CIvory,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: AppTheme.handDrawnBorderSide(color: AppColors.CBrown),
-              ),
-            ),
-          ),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
+      builder: (context) => _PickerPopupFrame(
+        title: 'Due Date',
+        child: CupertinoDatePicker(
+          mode: CupertinoDatePickerMode.date,
+          initialDateTime: tempDate,
+          minimumDate: DateTime.now().subtract(const Duration(days: 1)),
+          maximumDate: DateTime.now().add(const Duration(days: 3650)),
+          onDateTimeChanged: (picked) => tempDate = picked,
+        ),
+        onConfirm: () async {
+          widget.onDateSelected(tempDate);
+          await _syncToServerIfNeeded();
+          if (mounted) Navigator.of(context).pop();
+        },
+      ),
     );
-    if (picked == null) return;
-    setState(() => _selectedDate = picked);
-    widget.onDateSelected(picked);
-    await _syncToServerIfNeeded();
   }
 
-  Future<void> _openTimeScrollPicker(BuildContext context) async {
-    var temp = DateTime(
-      2020,
+  Future<void> _openTimePickerPopup(BuildContext context) async {
+    final initial = DateTime(
+      2000,
       1,
       1,
-      _selectedTime.hour,
-      _selectedTime.minute,
+      _safeTime.hour,
+      _safeTime.minute,
     );
+    var temp = initial;
 
-    final picked = await showModalBottomSheet<TimeOfDay>(
+    await showCupertinoModalPopup<void>(
       context: context,
-      backgroundColor: AppColors.CIvory,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (context) => _PickerPopupFrame(
+        title: 'Due Time',
+        child: CupertinoDatePicker(
+          mode: CupertinoDatePickerMode.time,
+          use24hFormat: true,
+          minuteInterval: 1,
+          initialDateTime: temp,
+          onDateTimeChanged: (picked) => temp = picked,
+        ),
+        onConfirm: () async {
+          widget.onTimeSelected(TimeOfDay(hour: temp.hour, minute: temp.minute));
+          await _syncToServerIfNeeded();
+          if (mounted) Navigator.of(context).pop();
+        },
       ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
-                child: Row(
-                  children: [
-                    Text('시간 선택', style: AppTextStyles.titleSmall),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.pop(sheetContext),
-                      child: const Text('취소'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(
-                          sheetContext,
-                          TimeOfDay(hour: temp.hour, minute: temp.minute),
-                        );
-                      },
-                      child: const Text('확인'),
-                    ),
-                  ],
-                ),
-              ),
-              ClipRect(
-                child: SizedBox(
-                height: 160,
-                child: CupertinoTheme(
-                  data: const CupertinoThemeData(
-                    textTheme: CupertinoTextThemeData(
-                      dateTimePickerTextStyle: TextStyle(
-                        fontSize: 22,
-                        color: AppColors.CTextPrimary,
-                      ),
-                    ),
-                  ),
-                  child: CupertinoDatePicker(
-                    mode: CupertinoDatePickerMode.time,
-                    use24hFormat: true,
-                    initialDateTime: temp,
-                    onDateTimeChanged: (value) => temp = value,
-                  ),
-                ),
-              ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
     );
-
-    if (picked == null) return;
-    setState(() => _selectedTime = picked);
-    widget.onTimeSelected(picked);
-    await _syncToServerIfNeeded();
   }
 
   @override
@@ -187,29 +112,21 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.CYellow.withValues(alpha: 0.24),
-            borderRadius: BorderRadius.circular(22),
-            border: AppTheme.handDrawnBorder(color: AppColors.CBrown),
-          ),
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _PickerButton(
-                label: '날짜 ${_dateLabel(_selectedDate)}',
-                color: AppColors.CSkyBlue.withValues(alpha: 0.28),
-                onTap: () => _openDatePickerPopup(context),
-              ),
-              _PickerButton(
-                label: '시간 ${_timeLabel(_selectedTime)}',
-                color: AppColors.CPink.withValues(alpha: 0.24),
-                onTap: () => _openTimeScrollPicker(context),
-              ),
-            ],
-          ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _TiltedKitschButton(
+              label: '날짜 ${_dateLabel(_safeDate)}',
+              color: AppColors.CYellow.withValues(alpha: 0.6),
+              onTap: () => _openDatePickerPopup(context),
+            ),
+            _TiltedKitschButton(
+              label: '시간 ${_timeLabel(_safeTime)}',
+              color: AppColors.CSkyBlue.withValues(alpha: 0.6),
+              onTap: () => _openTimePickerPopup(context),
+            ),
+          ],
         ),
         if (_errorText != null) ...[
           const SizedBox(height: 8),
@@ -223,8 +140,8 @@ class _RoomDateTimePickerState extends State<RoomDateTimePicker> {
   }
 }
 
-class _PickerButton extends StatelessWidget {
-  const _PickerButton({
+class _TiltedKitschButton extends StatelessWidget {
+  const _TiltedKitschButton({
     required this.label,
     required this.color,
     required this.onTap,
@@ -236,23 +153,71 @@ class _PickerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(20),
-            border: AppTheme.handDrawnBorder(color: AppColors.CBrown, width: 1.3),
-          ),
-          child: Text(
-            label,
-            style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+    return Transform.rotate(
+      angle: -2.2 * math.pi / 180,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.CBrown, width: 1.4),
+            ),
+            child: Text(label, style: AppTextStyles.bodyMedium),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PickerPopupFrame extends StatelessWidget {
+  const _PickerPopupFrame({
+    required this.title,
+    required this.child,
+    required this.onConfirm,
+  });
+
+  final String title;
+  final Widget child;
+  final VoidCallback onConfirm;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 320,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('취소'),
+                ),
+                Text(title, style: AppTextStyles.titleSmall),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: onConfirm,
+                  child: const Text('확인'),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(child: child),
+        ],
       ),
     );
   }

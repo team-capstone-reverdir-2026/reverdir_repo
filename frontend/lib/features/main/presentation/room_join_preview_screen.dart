@@ -6,7 +6,6 @@ import '../../../core/network/api_error_tracker.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/custom_button.dart';
-import '../../../core/widgets/doodle_background.dart';
 import '../data/main_repository.dart';
 
 class RoomJoinPreviewScreen extends StatefulWidget {
@@ -37,8 +36,7 @@ class _RoomJoinPreviewScreenState extends State<RoomJoinPreviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('방 입장 페이지')),
-      body: DoodleBackground(
-        child: Padding(
+      body: Padding(
         padding: const EdgeInsets.all(20),
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -67,7 +65,6 @@ class _RoomJoinPreviewScreenState extends State<RoomJoinPreviewScreen> {
                           ),
                         ],
                       ),
-      ),
       ),
     );
   }
