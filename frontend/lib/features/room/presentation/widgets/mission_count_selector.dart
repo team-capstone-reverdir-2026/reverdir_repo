@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/error_handler.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class MissionCountSelector extends StatefulWidget {
   const MissionCountSelector({
@@ -68,37 +69,43 @@ class _MissionCountSelectorState extends State<MissionCountSelector>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.CPink.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.CBrown, width: 1.2),
+            gradient: LinearGradient(
+              colors: [
+                AppColors.CPink.withValues(alpha: 0.35),
+                AppColors.CYellow.withValues(alpha: 0.28),
+                AppColors.CIvory,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: AppTheme.handDrawnBorder(color: AppColors.CBrown, width: 1.2),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               ScaleTransition(
                 scale: _controller,
-                child: IconButton(
-                  onPressed: _decrease,
-                  icon: const Icon(Icons.remove_rounded),
-                  color: AppColors.CTextPrimary,
+                child: _CountRoundButton(
+                  icon: Icons.remove_rounded,
+                  onTap: _decrease,
                 ),
               ),
-              Container(
-                width: 64,
-                alignment: Alignment.center,
-                child: Text(
-                  '${widget.count}',
-                  style: AppTextStyles.titleMedium,
+              Expanded(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    '인당 ${widget.count}개',
+                    style: AppTextStyles.titleMedium,
+                  ),
                 ),
               ),
               ScaleTransition(
                 scale: _controller,
-                child: IconButton(
-                  onPressed: _increase,
-                  icon: const Icon(Icons.add_rounded),
-                  color: AppColors.CTextPrimary,
+                child: _CountRoundButton(
+                  icon: Icons.add_rounded,
+                  onTap: _increase,
                 ),
               ),
             ],
@@ -112,6 +119,34 @@ class _MissionCountSelectorState extends State<MissionCountSelector>
           ),
         ],
       ],
+    );
+  }
+}
+
+class _CountRoundButton extends StatelessWidget {
+  const _CountRoundButton({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.CBackground.withValues(alpha: 0.8),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: AppTheme.handDrawnBorder(color: AppColors.CBrown, width: 1),
+          ),
+          child: Icon(icon, color: AppColors.CTextPrimary, size: 20),
+        ),
+      ),
     );
   }
 }
