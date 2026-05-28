@@ -2,7 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
+import '../../../core/network/api_client.dart';
 import '../../../core/network/api_enums.dart';
+import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/dio_client.dart';
+import '../../../core/network/error_handler.dart';
 import '../../hint/provider/hint_provider.dart';
 import '../../mission/provider/mission_provider.dart';
 
@@ -119,18 +123,23 @@ class MockGameService extends ChangeNotifier {
 
   static final MockGameService instance = MockGameService._();
   final math.Random _random = math.Random();
+  bool _isHydrating = false;
+  bool _useMockData = true;
 
-  final String roomId = 'test-room-123';
-  final String roomName = '우당탕탕 디자인팀';
-  final String roomDescription = '서로 몰래 챙겨주는 따끈한 토마토 마니또 실험실';
-  final String inviteCode = 'TOMA25';
-  final int maxMissionCount = 3;
-  final bool isHost = true;
-  final DateTime endsAt = DateTime.now().add(const Duration(days: 3));
+  bool get isHydrating => _isHydrating;
+  bool get useMockData => _useMockData;
+
+  String roomId = 'test-room-123';
+  String roomName = '우당탕탕 디자인팀';
+  String roomDescription = '서로 몰래 챙겨주는 따끈한 토마토 마니또 실험실';
+  String inviteCode = 'TOMA25';
+  int maxMissionCount = 3;
+  bool isHost = true;
+  DateTime endsAt = DateTime.now().add(const Duration(days: 3));
 
   GamePhase phase = GamePhase.preStart;
 
-  final List<ParticipantProgress> participants = const [
+  final List<ParticipantProgress> participants = [
     ParticipantProgress(
       userId: 'user_001',
       displayName: '은효',
@@ -267,6 +276,175 @@ class MockGameService extends ChangeNotifier {
 
   List<String> get participantNames =>
       participants.map((p) => p.displayName).toList(growable: false);
+
+  Future<void> hydrateFromBackend(String roomId) async {
+    if (_isHydrating) return;
+    if (!DioClient.instance.isInitialized) return;
+
+    _isHydrating = true;
+    notifyListeners();
+
+    try {
+      final detailRes = await apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.room(roomId),
+      );
+      final detail = detailRes.data ?? const <String, dynamic>{};
+
+      final participantsRes = await apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.roomParticipants(roomId),
+      );
+      final participantList =
+          (participantsRes.data?['participants'] as List<dynamic>? ?? const [])
+              .cast<Map<String, dynamic>>();
+
+      final missionsRes = await apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.roomMissions(roomId),
+      );
+      final missionList =
+          (missionsRes.data?['missions'] as List<dynamic>? ?? const [])
+              .cast<Map<String, dynamic>>();
+
+      final todayRes = await apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.roomQuestionsToday(roomId),
+      );
+      final historyRes = await apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.roomQuestionsHistory(roomId),
+      );
+      final historyList =
+          (historyRes.data?['history'] as List<dynamic>? ?? const [])
+              .cast<Map<String, dynamic>>();
+
+      final sentRes = await apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.roomNotesSent(roomId),
+      );
+      final recvRes = await apiClient.get<Map<String, dynamic>>(
+        ApiEndpoints.roomNotesReceived(roomId),
+      );
+
+      _applyBackendData(
+        detail: detail,
+        participantsJson: participantList,
+        missionsJson: missionList,
+        todayQuestionJson: todayRes.data ?? const <String, dynamic>{},
+        historyJson: historyList,
+        sentNotesJson: (sentRes.data?['notes'] as List<dynamic>? ?? const [])
+            .cast<Map<String, dynamic>>(),
+        receivedNotesJson:
+            (recvRes.data?['notes'] as List<dynamic>? ?? const [])
+                .cast<Map<String, dynamic>>(),
+      );
+      _useMockData = false;
+    } on ApiException {
+      _useMockData = true;
+    } catch (_) {
+      _useMockData = true;
+    } finally {
+      _isHydrating = false;
+      notifyListeners();
+    }
+  }
+
+  void _applyBackendData({
+    required Map<String, dynamic> detail,
+    required List<Map<String, dynamic>> participantsJson,
+    required List<Map<String, dynamic>> missionsJson,
+    required Map<String, dynamic> todayQuestionJson,
+    required List<Map<String, dynamic>> historyJson,
+    required List<Map<String, dynamic>> sentNotesJson,
+    required List<Map<String, dynamic>> receivedNotesJson,
+  }) {
+    final status = RoomStatus.tryParse(detail['status'] as String?);
+    if (status != null) {
+      phase = switch (status) {
+        RoomStatus.waiting => GamePhase.preStart,
+        RoomStatus.inProgress => GamePhase.inProgress,
+        RoomStatus.ended => GamePhase.finished,
+      };
+    }
+
+    final name = detail['name'] as String?;
+    if (name != null && name.trim().isNotEmpty) {
+      roomName = name;
+    }
+    roomDescription = detail['description'] as String? ?? roomDescription;
+    inviteCode = detail['inviteCode'] as String? ?? inviteCode;
+    maxMissionCount = detail['missionCount'] as int? ?? maxMissionCount;
+    isHost = detail['isHost'] as bool? ?? isHost;
+    final endsAtRaw = detail['endsAt'] as String?;
+    if (endsAtRaw != null && endsAtRaw.isNotEmpty) {
+      try {
+        endsAt = DateTime.parse(endsAtRaw).toLocal();
+      } catch (_) {
+        // keep existing mock value
+      }
+    }
+
+    if (participantsJson.isNotEmpty) {
+      participants
+        ..clear()
+        ..addAll(
+          participantsJson.map(
+            (item) => ParticipantProgress(
+              userId: item['userId'] as String? ?? '',
+              displayName: item['displayName'] as String? ?? '',
+              missionCount: item['missionCount'] as int? ?? 0,
+              isHost: item['isHost'] as bool? ?? false,
+            ),
+          ),
+        );
+    }
+
+    if (missionsJson.isNotEmpty) {
+      inProgressMissions.setMissions(
+        missionsJson.map(MissionUiItem.fromApiJson).toList(),
+      );
+    }
+
+    todayQuestion = TodayQuestionViewData.fromApiJson(todayQuestionJson);
+    questionHistory
+      ..clear()
+      ..addAll(
+        historyJson.map(
+          (item) => QuestionHistoryViewData(
+            date: item['date'] as String? ?? '',
+            question: item['question'] as String? ?? '',
+            myAnswer: item['myAnswer'] as String?,
+            manittoAnswer: item['manitoAnswer'] as String?,
+            isBlurred: item['isBlurred'] as bool? ?? false,
+          ),
+        ),
+      );
+
+    final sent = sentNotesJson.map(
+      (json) => _noteFromJson(json, NoteDirection.sent),
+    );
+    final received = receivedNotesJson.map(
+      (json) => _noteFromJson(json, NoteDirection.received),
+    );
+    letters
+      ..clear()
+      ..addAll(
+          [...sent, ...received]..sort((a, b) => b.sentAt.compareTo(a.sentAt)));
+  }
+
+  LetterNote _noteFromJson(Map<String, dynamic> json, NoteDirection fallback) {
+    final sentAtRaw = json['sentAt'] as String?;
+    DateTime sentAt;
+    try {
+      sentAt = sentAtRaw == null ? DateTime.now() : DateTime.parse(sentAtRaw);
+    } catch (_) {
+      sentAt = DateTime.now();
+    }
+
+    return LetterNote(
+      id: json['id'] as String? ?? '',
+      content: json['content'] as String? ?? '',
+      isRead: json['isRead'] as bool? ?? false,
+      sentAt: sentAt,
+      direction:
+          NoteDirection.tryParse(json['direction'] as String?) ?? fallback,
+    );
+  }
 
   void startGame() {
     phase = GamePhase.inProgress;

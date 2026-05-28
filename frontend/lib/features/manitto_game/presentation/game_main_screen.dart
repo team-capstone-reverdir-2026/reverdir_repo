@@ -32,6 +32,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
   @override
   void initState() {
     super.initState();
+    _service.hydrateFromBackend(widget.roomId);
   }
 
   @override
@@ -45,6 +46,12 @@ class _GameMainScreenState extends State<GameMainScreen> {
             child: Stack(
               children: [
                 _buildBody(),
+                if (_service.isHydrating)
+                  const Positioned(
+                    top: 16,
+                    left: 16,
+                    child: _SyncBadge(),
+                  ),
                 if (_service.phase == GamePhase.inProgress)
                   Positioned(
                     left: 0,
@@ -95,6 +102,30 @@ class _GameMainScreenState extends State<GameMainScreen> {
                 context.push(AppRoutes.roomResultsPath(widget.roomId)),
           ),
       },
+    );
+  }
+}
+
+class _SyncBadge extends StatelessWidget {
+  const _SyncBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.CBackground.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(999),
+        border:
+            Border.all(color: AppColors.CTextPrimary.withValues(alpha: 0.12)),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
     );
   }
 }

@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:reverdir/core/network/dio_client.dart';
 import 'package:reverdir/core/router/app_router.dart';
+import 'package:reverdir/core/storage/secure_storage_service.dart';
 import 'package:reverdir/core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  DioClient.instance.init(
+    tokenProvider: SecureStorageService.instance,
+  );
 
   runApp(const MyApp());
 }
