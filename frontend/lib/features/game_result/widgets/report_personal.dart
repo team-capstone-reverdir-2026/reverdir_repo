@@ -64,7 +64,7 @@ class ReportPersonal extends StatelessWidget {
                     borderRadius: BorderRadius.circular(42),
                     border: AppTheme.handDrawnBorder(color: AppColors.COrange),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Image.asset(
                       'assets${report.typeImageUrl}',
                       width: 132,
