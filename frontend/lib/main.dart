@@ -24,11 +24,12 @@ class MyApp extends StatelessWidget {
       routerConfig: appRouter,
       theme: AppTheme.light,
       builder: (context, child) {
-        return DoodleBackground(
-          opacity: 0.22,
-          child: ColoredBox(
-            color: AppColors.CBackground,
-            child: Center(
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            const ColoredBox(color: AppColors.CBackground),
+            const DoodlePaintLayer(opacity: 0.36),
+            Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 430),
                 child: DoodleBackground(
@@ -39,7 +40,7 @@ class MyApp extends StatelessWidget {
                 ),
               ),
             ),
-          ),
+          ],
         );
       },
     );

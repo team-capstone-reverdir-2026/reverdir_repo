@@ -35,7 +35,7 @@ class _InviteCodeDialogState extends State<InviteCodeDialog> {
     super.dispose();
   }
 
-  String get _code => _controller.text.trim().toUpperCase();
+  String get _code => _controller.text.trim();
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +52,7 @@ class _InviteCodeDialogState extends State<InviteCodeDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '영문·숫자 6자리',
+              '숫자 6자리',
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.CTextSecondary,
               ),
@@ -115,11 +115,8 @@ class _InviteCodeDialogState extends State<InviteCodeDialog> {
                           counterText: '',
                         ),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'[A-Za-z0-9]'),
-                          ),
+                          FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(_codeLength),
-                          _UpperCaseFormatter(),
                         ],
                         onChanged: (_) => setState(() {}),
                         onSubmitted: (_) {
@@ -197,15 +194,5 @@ class _CodeCell extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _UpperCaseFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    return newValue.copyWith(text: newValue.text.toUpperCase());
   }
 }

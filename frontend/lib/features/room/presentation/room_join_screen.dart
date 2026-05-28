@@ -12,6 +12,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_back_button.dart';
+import '../../../core/network/api_error_tracker.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/doodle_background.dart';
@@ -45,9 +47,7 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
   Future<void> _goNext() async {
     final userName = _nameController.text.trim();
     if (userName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이름을 입력해 주세요.')),
-      );
+      context.showSnackBar('이름을 입력해 주세요.');
       return;
     }
 
@@ -89,15 +89,11 @@ class _RoomJoinScreenState extends State<RoomJoinScreen> {
       }
       developer.log('참여자 등록 실패', name: 'ReverdirApi', error: e, stackTrace: s);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      context.showSnackBar(e.message);
     } catch (e, s) {
       developer.log('참여자 등록 실패', name: 'ReverdirApi', error: e, stackTrace: s);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('입장에 실패했습니다. 다시 시도해 주세요.')),
-      );
+      context.showSnackBar(ApiErrorTracker.userMessage(e));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

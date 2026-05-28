@@ -8,6 +8,7 @@ import '../../../core/storage/secure_storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../data/auth_repository.dart';
@@ -124,9 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       if (!mounted) return;
       setState(() => _apiError = message);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message, style: AppTextStyles.errorMessage)),
-      );
+      context.showSnackBar(message);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

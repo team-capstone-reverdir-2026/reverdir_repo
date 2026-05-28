@@ -7,6 +7,7 @@ import '../core/router/app_routes.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/extensions.dart';
 import '../core/widgets/app_back_button.dart';
 import '../core/widgets/custom_button.dart';
 import '../core/widgets/doodle_background.dart';
@@ -82,9 +83,7 @@ class _DemoSetScreenState extends State<DemoSetScreen> {
                           context.go(AppRoutes.roomDetailPath(widget.roomId));
                         } catch (e) {
                           if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('API 호출/응답 문제: $e')),
-                          );
+                          context.showUserError(e);
                         } finally {
                           if (mounted) setState(() => _submitting = false);
                         }

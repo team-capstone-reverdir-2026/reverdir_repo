@@ -2,6 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
+/// 전체 화면(앱 바깥 영역 포함)에 낙서만 그립니다. [Stack] 안에서 사용하세요.
+class DoodlePaintLayer extends StatelessWidget {
+  const DoodlePaintLayer({super.key, this.opacity = 0.34});
+
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: SizedBox.expand(
+        child: CustomPaint(
+          painter: _DoodlePainter(opacity: opacity),
+        ),
+      ),
+    );
+  }
+}
+
 /// 손으로 그린 듯한 배경 낙서 레이어.
 ///
 /// 화면의 기능 영역을 방해하지 않도록 낮은 opacity로 깔아 씁니다.
@@ -52,6 +70,15 @@ class _DoodlePainter extends CustomPainter {
           18, 0.1),
       _DoodleSpec(_DoodleKind.sparkle, const Offset(0.45, 0.86),
           AppColors.CPurple, 20, 0.3),
+      // 넓은 화면(앱 바깥 여백)용 추가 낙서
+      _DoodleSpec(_DoodleKind.star, const Offset(0.02, 0.22), AppColors.CYellow,
+          14, 0.15),
+      _DoodleSpec(_DoodleKind.heart, const Offset(0.96, 0.48), AppColors.CPink,
+          15, -0.25),
+      _DoodleSpec(_DoodleKind.sparkle, const Offset(0.04, 0.88),
+          AppColors.CSkyBlue, 16, 0.35),
+      _DoodleSpec(_DoodleKind.star, const Offset(0.94, 0.16), AppColors.COrange,
+          13, -0.1),
     ];
 
     for (final doodle in doodles) {

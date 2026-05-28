@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/error_handler.dart';
+import '../../../core/network/api_error_tracker.dart';
 import '../../../core/router/app_routes.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../data/room_invite_code_cache.dart';
 import '../../../core/theme/app_colors.dart';
@@ -69,9 +71,7 @@ class _MissionInputScreenState extends State<MissionInputScreen> {
     } catch (e, s) {
       developer.log('추천 미션 조회 실패', name: 'ReverdirApi', error: e, stackTrace: s);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('추천 미션을 불러오지 못했어요.')),
-      );
+      context.showSnackBar('추천 미션을 불러오지 못했어요.');
     }
   }
 
@@ -87,16 +87,12 @@ class _MissionInputScreenState extends State<MissionInputScreen> {
         .toList(growable: false);
 
     if (missions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('미션을 최소 1개 이상 입력해 주세요.')),
-      );
+      context.showSnackBar('미션을 최소 1개 이상 입력해 주세요.');
       return;
     }
 
     if (widget.roomId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('방 정보가 없습니다. 처음부터 다시 입장해 주세요.')),
-      );
+      context.showSnackBar('방 정보가 없습니다. 처음부터 다시 입장해 주세요.');
       return;
     }
 
@@ -132,15 +128,11 @@ class _MissionInputScreenState extends State<MissionInputScreen> {
     } on ApiException catch (e, s) {
       developer.log('미션 등록 실패', name: 'ReverdirApi', error: e, stackTrace: s);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      context.showSnackBar(e.message);
     } catch (e, s) {
       developer.log('미션 등록 실패', name: 'ReverdirApi', error: e, stackTrace: s);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('미션 등록에 실패했습니다. 다시 시도해 주세요.')),
-      );
+      context.showSnackBar(ApiErrorTracker.userMessage(e));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

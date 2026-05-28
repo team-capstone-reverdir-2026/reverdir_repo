@@ -8,6 +8,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../hint/provider/hint_provider.dart';
@@ -268,9 +269,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
         stackTrace: s,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      context.showSnackBar(message);
     }
   }
 
@@ -286,9 +285,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
         stackTrace: s,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      context.showSnackBar(message);
     }
   }
 }
