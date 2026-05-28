@@ -5,9 +5,11 @@ import com.reverdir.tomanito.auth.dto.LoginRequest;
 import com.reverdir.tomanito.auth.dto.RefreshTokenRequest;
 import com.reverdir.tomanito.auth.dto.RegisterRequest;
 import com.reverdir.tomanito.auth.service.AuthService;
+import com.reverdir.tomanito.global.auth.LoginUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +32,11 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@LoginUser Long userId) {
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/refresh")
