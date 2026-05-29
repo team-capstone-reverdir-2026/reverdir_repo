@@ -13,7 +13,7 @@ class HintBlur extends StatelessWidget {
   const HintBlur({
     super.key,
     required this.child,
-    this.chipLabel = '마니또가 답변했어요! (보고 싶다면 답장해주세요)',
+    required this.chipLabel,
     this.sigma = 4,
   });
 

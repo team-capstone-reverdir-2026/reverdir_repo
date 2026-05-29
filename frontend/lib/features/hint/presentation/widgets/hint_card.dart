@@ -9,6 +9,7 @@ import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/washi_tape.dart';
 import '../../provider/hint_provider.dart';
 import 'hint_blur.dart';
+import 'hint_blur_labels.dart';
 
 /// 오늘의 질문 카드 — GET .../questions/today
 class HintCard extends StatefulWidget {
@@ -233,7 +234,10 @@ class _AnswerPair extends StatelessWidget {
     );
 
     if (data.shouldBlurManittoAnswer) {
-      return HintBlur(child: bubble);
+      return HintBlur(
+        chipLabel: HintBlurLabels.todayManittoAnswered,
+        child: bubble,
+      );
     }
 
     return bubble;
