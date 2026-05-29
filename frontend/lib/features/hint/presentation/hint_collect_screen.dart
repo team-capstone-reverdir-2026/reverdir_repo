@@ -9,8 +9,9 @@ import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../../core/widgets/washi_tape.dart';
 import '../../../core/network/api_enums.dart';
+import '../../hint/provider/hint_provider.dart';
 import '../../manitto_game/data/game_repository.dart';
-import 'widgets/hint_blur.dart';
+import 'widgets/history_manitto_answer.dart';
 
 class HintCollectScreen extends StatefulWidget {
   const HintCollectScreen({
@@ -29,6 +30,7 @@ class _HintCollectScreenState extends State<HintCollectScreen> {
   bool _loading = true;
   String? _error;
   List<QuestionHistoryData> _history = const [];
+  TodayQuestionViewData? _todayQuestion;
 
   @override
   void initState() {
@@ -119,19 +121,15 @@ class _HintCollectScreenState extends State<HintCollectScreen> {
                           color: AppColors.CYellow,
                         ),
                         const SizedBox(height: 10),
-                        item.isBlurred
-                            ? HintBlur(
-                                child: _AnswerBlock(
-                                  title: '마니또 답변',
-                                  content: item.manittoAnswer ?? '',
-                                  color: AppColors.CSkyBlue,
-                                ),
-                              )
-                            : _AnswerBlock(
-                                title: '마니또 답변',
-                                content: item.manittoAnswer ?? '마니또가 고민 중이에요.',
-                                color: AppColors.CSkyBlue,
-                              ),
+                        HistoryManittoAnswer(
+                          item: item,
+                          todayQuestion: _todayQuestion,
+                          answerBlockBuilder: (content) => _AnswerBlock(
+                            title: '마니또 답변',
+                            content: content,
+                            color: AppColors.CSkyBlue,
+                          ),
+                        ),
                       ],
                     ),
                   ),
