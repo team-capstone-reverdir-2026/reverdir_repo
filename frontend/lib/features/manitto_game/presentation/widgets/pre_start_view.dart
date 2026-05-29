@@ -267,6 +267,14 @@ class _RoomIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'pre_start_view.dart:_RoomIntro.build',
+      message: '_RoomIntro.build entered',
+      hypothesisId: 'H13,H19',
+      data: {'inviteCodeEmpty': inviteCode.isEmpty},
+    );
+    // #endregion
     return Transform.rotate(
       angle: -0.012,
       child: Stack(
@@ -389,6 +397,21 @@ class _ParticipantsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'pre_start_view.dart:_ParticipantsCard.build',
+      message: '_ParticipantsCard.build entered',
+      hypothesisId: 'H14,H20',
+      data: {
+        'participantsLen': participants.length,
+        'maxMissionCount': maxMissionCount,
+        'maxMissionCountType': maxMissionCount.runtimeType.toString(),
+        'firstMissionCountType': participants.isEmpty
+            ? null
+            : participants.first.missionCount.runtimeType.toString(),
+      },
+    );
+    // #endregion
     return Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -404,6 +427,17 @@ class _ParticipantsCard extends StatelessWidget {
             ...participants.map(
               (p) {
                 final entered = _missionCountFor(p);
+                // #region agent log
+                AgentDebugLog.log(
+                  location: 'pre_start_view.dart:_ParticipantsCard.row',
+                  message: 'participant row build',
+                  hypothesisId: 'H14,H20',
+                  data: {
+                    'displayNameEmpty': p.displayName.trim().isEmpty,
+                    'enteredType': entered.runtimeType.toString(),
+                  },
+                );
+                // #endregion
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Row(
@@ -478,6 +512,18 @@ class _MissionDraftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'pre_start_view.dart:_MissionDraftCard.build',
+      message: '_MissionDraftCard.build entered',
+      hypothesisId: 'H15,H17,H20',
+      data: {
+        'myMissionsLen': myMissions.length,
+        'maxMissionCount': maxMissionCount,
+        'showAddRow': myMissions.length < maxMissionCount,
+      },
+    );
+    // #endregion
     return Transform.rotate(
       angle: -0.01,
       child: Stack(

@@ -5,10 +5,34 @@ import 'package:reverdir/core/router/app_router.dart';
 import 'package:reverdir/core/storage/secure_storage_service.dart';
 import 'package:reverdir/core/theme/app_colors.dart';
 import 'package:reverdir/core/theme/app_theme.dart';
+import 'package:reverdir/core/widgets/app_scaffold_messenger.dart';
 import 'package:reverdir/core/widgets/doodle_background.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // #region agent log
+  final prevOnError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    AgentDebugLog.log(
+      location: 'main.dart:FlutterError.onError',
+      message: 'flutter error captured',
+      hypothesisId: 'H21,H22,H23',
+      data: {
+        'exception': details.exceptionAsString(),
+        'context': details.context?.toStringDeep(),
+        'library': details.library,
+        'stackHead': details.stack?.toString().split('\n').take(6).join(' | '),
+      },
+    );
+    if (prevOnError != null) {
+      prevOnError(details);
+    } else {
+      FlutterError.presentError(details);
+    }
+  };
+  // #endregion
+
   DioClient.instance.init(
     tokenProvider: SecureStorageService.instance,
   );
@@ -22,6 +46,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: appRouter,
       theme: AppTheme.light,
       builder: (context, child) {

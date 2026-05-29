@@ -3,9 +3,6 @@ import 'dart:io' if (dart.library.html) 'agent_debug_log_stub.dart' as io;
 
 import 'package:flutter/foundation.dart';
 
-import 'agent_debug_log_transport.dart'
-    if (dart.library.html) 'agent_debug_log_transport_web.dart' as transport;
-
 /// Debug-mode NDJSON logger (session 45384d).
 class AgentDebugLog {
   AgentDebugLog._();
@@ -21,9 +18,11 @@ class AgentDebugLog {
     Map<String, dynamic>? data,
     String runId = 'pre-fix',
   }) {
+    final ts = DateTime.now().millisecondsSinceEpoch;
     final payload = <String, dynamic>{
+      'id': 'log_${ts}_45384d',
       'sessionId': _sessionId,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'timestamp': ts,
       'location': location,
       'message': message,
       'hypothesisId': hypothesisId,
@@ -34,9 +33,8 @@ class AgentDebugLog {
     debugPrint('[agent-debug] $line');
 
     // #region agent log transport
-    if (kIsWeb) {
-      transport.postDebugLog(line);
-    } else {
+    // Web: debugPrint만 (ingest POST는 500/CORS로 콘솔 오염). Desktop: NDJSON 파일.
+    if (!kIsWeb) {
       try {
         io.File(_logPath).writeAsStringSync(
           '$line\n',
