@@ -24,6 +24,11 @@ class DateFormatter {
     }
   }
 
+  /// 로컬 [DateTime] → "5월 21일"
+  static String formatLocalDate(DateTime date) {
+    return _displayDate.format(date.toLocal());
+  }
+
   /// API `date` (YYYY-MM-DD) → "5월 21일"
   static String formatApiDate(String? date, {String fallback = '-'}) {
     if (date == null || date.isEmpty) return fallback;

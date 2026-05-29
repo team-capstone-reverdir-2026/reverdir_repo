@@ -34,18 +34,47 @@ class LetterRepository {
   final ApiClient? _client;
   ApiClient get _api => _client ?? apiClient;
 
-  Future<List<LetterNoteData>> fetchSent(String roomId) async {
-    final res =
-        await _api.get<Map<String, dynamic>>(ApiEndpoints.roomNotesSent(roomId));
+  Future<List<LetterNoteData>> fetchSent(
+    String roomId, {
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    final res = await _api.get<Map<String, dynamic>>(
+      ApiEndpoints.roomNotesSent(roomId),
+      queryParameters: _dateQuery(from, to),
+    );
     final list = parseJsonMapList(res.data?['notes']);
     return list.map(LetterNoteData.fromJson).toList();
   }
 
-  Future<List<LetterNoteData>> fetchReceived(String roomId) async {
-    final res =
-        await _api.get<Map<String, dynamic>>(ApiEndpoints.roomNotesReceived(roomId));
+  Future<List<LetterNoteData>> fetchReceived(
+    String roomId, {
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    final res = await _api.get<Map<String, dynamic>>(
+      ApiEndpoints.roomNotesReceived(roomId),
+      queryParameters: _dateQuery(from, to),
+    );
     final list = parseJsonMapList(res.data?['notes']);
     return list.map(LetterNoteData.fromJson).toList();
+  }
+
+  /// api-docs: `from`/`to` = `YYYY-MM-DD` (필터 선택 시에만 전달).
+  static Map<String, dynamic>? _dateQuery(DateTime? from, DateTime? to) {
+    if (from == null && to == null) return null;
+    return {
+      if (from != null) 'from': _toApiDate(from),
+      if (to != null) 'to': _toApiDate(to),
+    };
+  }
+
+  static String _toApiDate(DateTime date) {
+    final local = date.toLocal();
+    final y = local.year;
+    final m = local.month.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 
   Future<void> markRead(String roomId, String noteId) async {
