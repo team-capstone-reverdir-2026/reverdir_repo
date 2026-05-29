@@ -5,6 +5,38 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../manitto_game/data/game_repository.dart';
 
+/// 본문 서술 — 공백 단위 줄바꿈, 공백 없으면 글자 단위(Text softWrap).
+class _WrappingNarrativeText extends StatelessWidget {
+  const _WrappingNarrativeText({
+    required this.text,
+    required this.style,
+  });
+
+  final String text;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = text.trim();
+    if (content.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(
+          content,
+          style: style,
+          textAlign: TextAlign.center,
+          softWrap: true,
+          overflow: TextOverflow.visible,
+          textWidthBasis: TextWidthBasis.parent,
+        ),
+      ),
+    );
+  }
+}
+
 /// 유형명 + 문장부호를 한 덩어리로 줄바꿈 (느낌표 단독 다음 줄 방지).
 class _TypeNameHeading extends StatelessWidget {
   const _TypeNameHeading({required this.typeName});
@@ -20,27 +52,32 @@ class _TypeNameHeading extends StatelessWidget {
     final base = match == null ? trimmed : trimmed.substring(0, match.start);
     final suffix = match == null ? '!' : trimmed.substring(match.start);
 
-    return Text.rich(
-      TextSpan(
-        style: AppTextStyles.displayMedium,
-        children: [
-          TextSpan(
-            text: base,
-            style: AppTextStyles.displayMedium.copyWith(
-              color: AppColors.CPurple,
+    return SizedBox(
+      width: double.infinity,
+      child: Text.rich(
+        TextSpan(
+          style: AppTextStyles.displayMedium,
+          children: [
+            TextSpan(
+              text: base,
+              style: AppTextStyles.displayMedium.copyWith(
+                color: AppColors.CPurple,
+              ),
             ),
-          ),
-          TextSpan(
-            // WORD JOINER — 부호가 앞 글자/단어와 분리되어 줄바꿈되지 않게 함
-            text: '\u2060$suffix',
-            style: AppTextStyles.displayMedium.copyWith(
-              color: suffix == '!' ? AppColors.CRed : AppColors.CPurple,
+            TextSpan(
+              // WORD JOINER — 부호가 앞 글자/단어와 분리되어 줄바꿈되지 않게 함
+              text: '\u2060$suffix',
+              style: AppTextStyles.displayMedium.copyWith(
+                color: suffix == '!' ? AppColors.CRed : AppColors.CPurple,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+        textAlign: TextAlign.center,
+        softWrap: true,
+        overflow: TextOverflow.visible,
+        textWidthBasis: TextWidthBasis.parent,
       ),
-      textAlign: TextAlign.center,
-      softWrap: true,
     );
   }
 }
@@ -107,10 +144,9 @@ class ReportPersonal extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  report.storyText,
+                _WrappingNarrativeText(
+                  text: report.storyText,
                   style: AppTextStyles.bodyLarge.copyWith(height: 1.65),
-                  textAlign: TextAlign.center,
                 ),
               ],
             ),
