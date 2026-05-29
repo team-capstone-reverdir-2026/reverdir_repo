@@ -1,11 +1,24 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/debug/agent_debug_log.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_enums.dart';
 import '../../../core/utils/json_parse.dart';
 import '../../hint/provider/hint_provider.dart';
 import '../../mission/provider/mission_provider.dart';
+
+// #region agent log
+/// 응답 맵의 각 값에 대한 런타임 타입을 기록 (백엔드 int/double/string 차이 추적).
+Map<String, String> _fieldTypes(Object? data) {
+  if (data is! Map) return {'_notMap': data.runtimeType.toString()};
+  final out = <String, String>{};
+  data.forEach((k, v) {
+    out['$k'] = v == null ? 'null' : v.runtimeType.toString();
+  });
+  return out;
+}
+// #endregion
 
 class RoomDetailData {
   const RoomDetailData({
@@ -164,6 +177,14 @@ class GameRepository {
 
   Future<RoomDetailData> fetchRoomDetail(String roomId) async {
     final res = await _api.get<Map<String, dynamic>>(ApiEndpoints.room(roomId));
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'game_repository.dart:fetchRoomDetail',
+      message: 'room detail raw field types',
+      hypothesisId: 'H6,H20',
+      data: {'fieldTypes': _fieldTypes(res.data)},
+    );
+    // #endregion
     return RoomDetailData.fromJson(res.data ?? const {});
   }
 
@@ -172,6 +193,17 @@ class GameRepository {
       ApiEndpoints.roomParticipants(roomId),
     );
     final list = parseJsonMapList(res.data?['participants']);
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'game_repository.dart:fetchParticipants',
+      message: 'participants raw field types',
+      hypothesisId: 'H6,H20',
+      data: {
+        'count': list.length,
+        'firstFieldTypes': list.isEmpty ? null : _fieldTypes(list.first),
+      },
+    );
+    // #endregion
     return list.map(ParticipantData.fromJson).toList();
   }
 
@@ -179,6 +211,20 @@ class GameRepository {
     final res =
         await _api.get<Map<String, dynamic>>(ApiEndpoints.roomMissions(roomId));
     final list = parseJsonMapList(res.data?['missions']);
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'game_repository.dart:fetchMissions',
+      message: 'missions raw field types',
+      hypothesisId: 'H6,H20',
+      data: {
+        'count': list.length,
+        'maxCountType': res.data?['maxCount'] == null
+            ? 'null'
+            : res.data!['maxCount'].runtimeType.toString(),
+        'firstFieldTypes': list.isEmpty ? null : _fieldTypes(list.first),
+      },
+    );
+    // #endregion
     return RoomMissionsData(
       missions: list.map(MissionUiItem.fromApiJson).toList(),
       maxCount: parseJsonInt(res.data?['maxCount']),

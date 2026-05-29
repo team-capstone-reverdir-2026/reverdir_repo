@@ -7,6 +7,7 @@ import '../../../core/router/app_routes.dart';
 import '../../../core/storage/secure_storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_scaffold_messenger.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/custom_text_field.dart';
@@ -105,17 +106,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final result = await _repo.register(
+      await _repo.register(
         name: _nameController.text.trim(),
         username: _idController.text.trim(),
         password: _pwController.text,
       );
-      await SecureStorageService.instance.saveTokens(
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-      );
+      await SecureStorageService.instance.clearTokens();
       if (!mounted) return;
-      context.go(AppRoutes.home);
+      showRootSnackBar('회원가입이 완료되었습니다!');
+      context.go(AppRoutes.login);
     } catch (e, s) {
       final message = ApiErrorTracker.logAndBuildMessage(
         method: 'POST',

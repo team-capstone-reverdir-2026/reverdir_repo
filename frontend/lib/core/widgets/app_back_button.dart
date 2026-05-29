@@ -59,12 +59,17 @@ class AppBackButtonOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: top,
-      left: left,
-      child: AppBackButton(
-        onPressed: onPressed,
-        fallbackToHome: fallbackToHome,
+    // Positioned는 Stack 직계 자식에서만 유효하다. SafeArea 등으로 감싸이면
+    // BoxParentData → StackParentData 캐스트가 release(dart2js)에서 깨진다.
+    // 어떤 부모에서도 안전하도록 Align + Padding으로 좌상단 배치한다.
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Padding(
+        padding: EdgeInsets.only(top: top, left: left),
+        child: AppBackButton(
+          onPressed: onPressed,
+          fallbackToHome: fallbackToHome,
+        ),
       ),
     );
   }

@@ -190,19 +190,20 @@ class _GameMainScreenState extends State<GameMainScreen> {
                 onRetry: _load,
               )
             : InProgressView(
-            key: const ValueKey(GamePhase.inProgress),
-            roomId: widget.roomId,
-            roomName: detail.name,
-            status: detail.status,
-            daysRemaining: detail.daysRemaining,
-            participantNames:
-                _participants.map((e) => e.displayName).toList(growable: false),
-            todayQuestion: _todayQuestion!,
-            missionProvider: _missionProvider,
-            onAnswerSubmitted: _submitTodayAnswer,
-            myManittiDisplayName: _myManittiName,
-            endsAt: detail.endsAt,
-          ),
+                key: const ValueKey(GamePhase.inProgress),
+                roomId: widget.roomId,
+                roomName: detail.name,
+                status: detail.status,
+                daysRemaining: detail.daysRemaining,
+                participantNames: _participants
+                    .map((e) => e.displayName)
+                    .toList(growable: false),
+                todayQuestion: _todayQuestion!,
+                missionProvider: _missionProvider,
+                onAnswerSubmitted: _submitTodayAnswer,
+                myManittiDisplayName: _myManittiName,
+                endsAt: detail.endsAt,
+              ),
         GamePhase.finished => FinishedView(
             key: const ValueKey(GamePhase.finished),
             participantCount: detail.participantCount,

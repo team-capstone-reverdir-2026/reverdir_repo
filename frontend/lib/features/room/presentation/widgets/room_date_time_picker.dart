@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -380,6 +382,23 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
     widget.onSelected(value);
   }
 
+  /// Web·데스크톱 휠은 ListWheel 기본 스크롤이 2칸 이상 점프할 수 있어 직접 1칸만 이동.
+  bool get _manualWheelStep =>
+      kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.linux;
+
+  void _onPointerScroll(PointerSignalEvent event) {
+    if (!_manualWheelStep || event is! PointerScrollEvent) return;
+    if (!_controller.hasClients) return;
+    final dy = event.scrollDelta.dy;
+    if (dy == 0) return;
+    final next = _controller.selectedItem + (dy > 0 ? 1 : -1);
+    _controller.jumpToItem(next);
+    _handleSelection(next);
+  }
+
   @override
   Widget build(BuildContext context) {
     final wheelHeight = _itemExtent * _visibleRows;
@@ -410,30 +429,35 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
               ClipRect(
                 child: SizedBox(
                   height: wheelHeight,
-                  child: ListWheelScrollView.useDelegate(
-                    controller: _controller,
-                    itemExtent: _itemExtent,
-                    diameterRatio: 1.45,
-                    perspective: 0.003,
-                    physics: const FixedExtentScrollPhysics(),
-                    onSelectedItemChanged: _handleSelection,
-                    childDelegate: ListWheelChildBuilderDelegate(
-                      childCount: widget.loopCount * _loopRepeats,
-                      builder: (context, index) {
-                        final loopIndex = index % widget.loopCount;
-                        final selected = _controller.hasClients &&
-                            _controller.selectedItem == index;
-                        return Center(
-                          child: Text(
-                            widget.labelBuilder(loopIndex),
-                            style: _wheelTextStyle.copyWith(
-                              color: AppColors.CTextPrimary.withValues(
-                                alpha: selected ? 1 : 0.38,
+                  child: Listener(
+                    onPointerSignal: _onPointerScroll,
+                    child: ListWheelScrollView.useDelegate(
+                      controller: _controller,
+                      itemExtent: _itemExtent,
+                      diameterRatio: 1.45,
+                      perspective: 0.003,
+                      physics: _manualWheelStep
+                          ? const NeverScrollableScrollPhysics()
+                          : const FixedExtentScrollPhysics(),
+                      onSelectedItemChanged: _handleSelection,
+                      childDelegate: ListWheelChildBuilderDelegate(
+                        childCount: widget.loopCount * _loopRepeats,
+                        builder: (context, index) {
+                          final loopIndex = index % widget.loopCount;
+                          final selected = _controller.hasClients &&
+                              _controller.selectedItem == index;
+                          return Center(
+                            child: Text(
+                              widget.labelBuilder(loopIndex),
+                              style: _wheelTextStyle.copyWith(
+                                color: AppColors.CTextPrimary.withValues(
+                                  alpha: selected ? 1 : 0.38,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
