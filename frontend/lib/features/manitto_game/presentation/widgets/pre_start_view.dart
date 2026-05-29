@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/debug/agent_debug_log.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -60,6 +61,26 @@ class _PreStartViewState extends State<PreStartView> {
 
   @override
   Widget build(BuildContext context) {
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'pre_start_view.dart:build',
+      message: 'PreStartView build start',
+      hypothesisId: 'H12,H19',
+      data: {
+        'isHost': widget.isHost,
+        'participantLen': widget.participants.length,
+        'missionLen': widget.myMissions.length,
+        'maxMissionCount': widget.maxMissionCount,
+        'firstParticipantType': widget.participants.isEmpty
+            ? null
+            : widget.participants.first.runtimeType.toString(),
+        'firstMissionType': widget.myMissions.isEmpty
+            ? null
+            : widget.myMissions.first.runtimeType.toString(),
+      },
+    );
+    // #endregion
+
     return Stack(
       children: [
         ListView(
@@ -70,27 +91,60 @@ class _PreStartViewState extends State<PreStartView> {
             widget.isHost ? 150 : 40,
           ),
           children: [
-            _RoomIntro(
-              roomName: widget.roomName,
-              roomDescription: widget.roomDescription,
-              inviteCode: widget.inviteCode,
+            Builder(
+              builder: (context) {
+                // #region agent log
+                AgentDebugLog.log(
+                  location: 'pre_start_view.dart:roomIntro',
+                  message: 'building _RoomIntro',
+                  hypothesisId: 'H13,H19',
+                );
+                // #endregion
+                return _RoomIntro(
+                  roomName: widget.roomName,
+                  roomDescription: widget.roomDescription,
+                  inviteCode: widget.inviteCode,
+                );
+              },
             ),
             const SizedBox(height: 22),
-            _ParticipantsCard(
-              participants: widget.participants,
-              maxMissionCount: widget.maxMissionCount,
-              myMissionCount: widget.myMissionCount,
-              myDisplayName: widget.myDisplayName,
+            Builder(
+              builder: (context) {
+                // #region agent log
+                AgentDebugLog.log(
+                  location: 'pre_start_view.dart:participants',
+                  message: 'building _ParticipantsCard',
+                  hypothesisId: 'H14',
+                );
+                // #endregion
+                return _ParticipantsCard(
+                  participants: widget.participants,
+                  maxMissionCount: widget.maxMissionCount,
+                  myMissionCount: widget.myMissionCount,
+                  myDisplayName: widget.myDisplayName,
+                );
+              },
             ),
             const SizedBox(height: 22),
-            _MissionDraftCard(
-              maxMissionCount: widget.maxMissionCount,
-              myMissions: widget.myMissions,
-              controller: _missionController,
-              onAdd: _addMission,
-              onRecommend: _recommendMission,
-              onUpdateMission: widget.onUpdateMission,
-              onDeleteMission: widget.onDeleteMission,
+            Builder(
+              builder: (context) {
+                // #region agent log
+                AgentDebugLog.log(
+                  location: 'pre_start_view.dart:missionDraft',
+                  message: 'building _MissionDraftCard',
+                  hypothesisId: 'H15,H17',
+                );
+                // #endregion
+                return _MissionDraftCard(
+                  maxMissionCount: widget.maxMissionCount,
+                  myMissions: widget.myMissions,
+                  controller: _missionController,
+                  onAdd: _addMission,
+                  onRecommend: _recommendMission,
+                  onUpdateMission: widget.onUpdateMission,
+                  onDeleteMission: widget.onDeleteMission,
+                );
+              },
             ),
             const SizedBox(height: 24),
             if (!widget.isHost)
@@ -213,6 +267,14 @@ class _RoomIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'pre_start_view.dart:_RoomIntro.build',
+      message: '_RoomIntro.build entered',
+      hypothesisId: 'H13,H19',
+      data: {'inviteCodeEmpty': inviteCode.isEmpty},
+    );
+    // #endregion
     return Transform.rotate(
       angle: -0.012,
       child: Stack(
@@ -335,6 +397,21 @@ class _ParticipantsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'pre_start_view.dart:_ParticipantsCard.build',
+      message: '_ParticipantsCard.build entered',
+      hypothesisId: 'H14,H20',
+      data: {
+        'participantsLen': participants.length,
+        'maxMissionCount': maxMissionCount,
+        'maxMissionCountType': maxMissionCount.runtimeType.toString(),
+        'firstMissionCountType': participants.isEmpty
+            ? null
+            : participants.first.missionCount.runtimeType.toString(),
+      },
+    );
+    // #endregion
     return Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -350,6 +427,17 @@ class _ParticipantsCard extends StatelessWidget {
             ...participants.map(
               (p) {
                 final entered = _missionCountFor(p);
+                // #region agent log
+                AgentDebugLog.log(
+                  location: 'pre_start_view.dart:_ParticipantsCard.row',
+                  message: 'participant row build',
+                  hypothesisId: 'H14,H20',
+                  data: {
+                    'displayNameEmpty': p.displayName.trim().isEmpty,
+                    'enteredType': entered.runtimeType.toString(),
+                  },
+                );
+                // #endregion
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Row(
@@ -424,6 +512,18 @@ class _MissionDraftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'pre_start_view.dart:_MissionDraftCard.build',
+      message: '_MissionDraftCard.build entered',
+      hypothesisId: 'H15,H17,H20',
+      data: {
+        'myMissionsLen': myMissions.length,
+        'maxMissionCount': maxMissionCount,
+        'showAddRow': myMissions.length < maxMissionCount,
+      },
+    );
+    // #endregion
     return Transform.rotate(
       angle: -0.01,
       child: Stack(
@@ -450,7 +550,9 @@ class _MissionDraftCard extends StatelessWidget {
                   (mission) => _EditableMissionRow(
                     key: ValueKey(mission.id),
                     mission: mission,
-                    onChanged: (value) => onUpdateMission(mission.id, value),
+                    onChanged: (value) {
+                      onUpdateMission(mission.id, value);
+                    },
                     onDelete: () => onDeleteMission(mission.id),
                   ),
                 ),
@@ -463,7 +565,9 @@ class _MissionDraftCard extends StatelessWidget {
                           controller: controller,
                           hint: '예: 몰래 칭찬 스티커 붙여주기',
                           textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => onAdd(),
+                          onSubmitted: (_) {
+                            onAdd();
+                          },
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -527,7 +631,7 @@ class _EditableMissionRow extends StatefulWidget {
   });
 
   final EditableMission mission;
-  final Future<void> Function(String value) onChanged;
+  final ValueChanged<String> onChanged;
   final Future<void> Function() onDelete;
 
   @override
@@ -568,7 +672,9 @@ class _EditableMissionRowState extends State<_EditableMissionRow> {
             child: CustomTextField(
               controller: _controller,
               textInputAction: TextInputAction.done,
-              onSubmitted: widget.onChanged,
+              onSubmitted: (value) {
+                widget.onChanged(value);
+              },
             ),
           ),
           IconButton(

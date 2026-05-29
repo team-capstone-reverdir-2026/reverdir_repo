@@ -16,7 +16,20 @@ class AppTextStyles {
     TextDecoration? decoration,
     Color? decorationColor,
   }) {
-    return GoogleFonts.poorStory(
+    // GoogleFonts TextStyle 서브클래스는 Web 릴리스에서 Theme/TextField 병합 시
+    // FontWeight 등 subtype 오류를 유발할 수 있어 plain TextStyle로 고정합니다.
+    final google = GoogleFonts.poorStory(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      height: height,
+      letterSpacing: letterSpacing,
+      color: color,
+      decoration: decoration,
+      decorationColor: decorationColor,
+    );
+    return TextStyle(
+      fontFamily: google.fontFamily,
+      fontFamilyFallback: google.fontFamilyFallback,
       fontSize: fontSize,
       fontWeight: fontWeight,
       height: height,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/debug/agent_debug_log.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_error_tracker.dart';
 import '../../../core/network/api_enums.dart';
@@ -10,6 +11,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/widgets/app_back_button.dart';
+import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/doodle_background.dart';
 import '../../hint/provider/hint_provider.dart';
 import '../../room/data/room_invite_code_cache.dart';
@@ -48,7 +50,7 @@ class _GameMainScreenState extends State<GameMainScreen> {
   RoomDetailData? _detail;
   List<ParticipantData> _participants = const [];
   List<EditableMission> _draftMissions = const [];
-  List<MissionUiItem> _missions = const [];
+  late final MissionProvider _missionProvider;
   int _maxMissionCount = 0;
   TodayQuestionViewData? _todayQuestion;
   String? _myManittiName;
@@ -57,11 +59,48 @@ class _GameMainScreenState extends State<GameMainScreen> {
   @override
   void initState() {
     super.initState();
+    _missionProvider = MissionProvider(
+      const [],
+      onToggleRemote: (missionId, isCompleted) => _repo.patchMission(
+        widget.roomId,
+        missionId,
+        isCompleted: isCompleted,
+      ),
+    );
     _load();
   }
 
   @override
+  void dispose() {
+    _missionProvider.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // #region agent log
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final route = ModalRoute.of(context);
+      AgentDebugLog.log(
+        location: 'game_main_screen.dart:build',
+        message: 'GameMainScreen post-frame state',
+        hypothesisId: 'H1,H2,H4,H5',
+        data: {
+          'loading': _loading,
+          'apiError': _apiError,
+          'detailIsNull': _detail == null,
+          'detailStatus': _detail?.status.name,
+          'hasTodayQuestion': _todayQuestion != null,
+          'navigatorCanPop': Navigator.canPop(context),
+          'routeBarrierColor': route?.barrierColor?.toString(),
+          'routeIsCurrent': route?.isCurrent,
+          'roomId': widget.roomId,
+        },
+      );
+    });
+    // #endregion
+
     return Scaffold(
       backgroundColor: AppColors.CBackground,
       body: DoodleBackground(
@@ -106,6 +145,23 @@ class _GameMainScreenState extends State<GameMainScreen> {
       RoomStatus.inProgress => GamePhase.inProgress,
       RoomStatus.ended => GamePhase.finished,
     };
+    // #region agent log
+    if (phase == GamePhase.preStart) {
+      AgentDebugLog.log(
+        location: 'game_main_screen.dart:_buildBody',
+        message: 'preStart phase data types',
+        hypothesisId: 'H12,H19',
+        data: {
+          'participantsLen': _participants.length,
+          'draftMissionsLen': _draftMissions.length,
+          'participantsListType': _participants.runtimeType.toString(),
+          'draftMissionsListType': _draftMissions.runtimeType.toString(),
+          'isHost': detail.isHost,
+          'isHostType': detail.isHost.runtimeType.toString(),
+        },
+      );
+    }
+    // #endregion
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 350),
       switchInCurve: Curves.easeOutCubic,
@@ -128,29 +184,26 @@ class _GameMainScreenState extends State<GameMainScreen> {
             onUpdateMission: _updateMission,
             onDeleteMission: _deleteMission,
           ),
-        GamePhase.inProgress => InProgressView(
-            key: const ValueKey(GamePhase.inProgress),
-            roomId: widget.roomId,
-            roomName: detail.name,
-            status: detail.status,
-            daysRemaining: detail.daysRemaining,
-            participantNames:
-                _participants.map((e) => e.displayName).toList(growable: false),
-            todayQuestion: _todayQuestion!,
-            missionProvider: MissionProvider(
-              _missions,
-              onToggleRemote: (missionId, isCompleted) {
-                return _repo.patchMission(
-                  widget.roomId,
-                  missionId,
-                  isCompleted: isCompleted,
-                );
-              },
-            ),
-            onAnswerSubmitted: _submitTodayAnswer,
-            myManittiDisplayName: _myManittiName,
-            endsAt: detail.endsAt,
-          ),
+        GamePhase.inProgress => _todayQuestion == null
+            ? _InProgressFallback(
+                key: const ValueKey('inProgress_missing_question'),
+                onRetry: _load,
+              )
+            : InProgressView(
+                key: const ValueKey(GamePhase.inProgress),
+                roomId: widget.roomId,
+                roomName: detail.name,
+                status: detail.status,
+                daysRemaining: detail.daysRemaining,
+                participantNames: _participants
+                    .map((e) => e.displayName)
+                    .toList(growable: false),
+                todayQuestion: _todayQuestion!,
+                missionProvider: _missionProvider,
+                onAnswerSubmitted: _submitTodayAnswer,
+                myManittiDisplayName: _myManittiName,
+                endsAt: detail.endsAt,
+              ),
         GamePhase.finished => FinishedView(
             key: const ValueKey(GamePhase.finished),
             participantCount: detail.participantCount,
@@ -165,6 +218,15 @@ class _GameMainScreenState extends State<GameMainScreen> {
   }
 
   Future<void> _load() async {
+    // #region agent log
+    AgentDebugLog.log(
+      location: 'game_main_screen.dart:_load',
+      message: '_load started',
+      hypothesisId: 'H1',
+      data: {'roomId': widget.roomId},
+    );
+    // #endregion
+
     setState(() {
       _loading = true;
       _apiError = null;
@@ -201,15 +263,29 @@ class _GameMainScreenState extends State<GameMainScreen> {
       setState(() {
         _detail = detail;
         _participants = participants;
-        _missions = missionData.missions;
         _maxMissionCount = maxCount;
         _draftMissions = missionData.missions
-            .map((m) => EditableMission(id: m.id, content: m.content))
+            .map<EditableMission>(
+              (m) => EditableMission(id: m.id, content: m.content),
+            )
             .toList(growable: false);
         _todayQuestion = question;
         _myManittiName = myManitti;
         _resolvedInviteCode = inviteCode;
+        _missionProvider.setMissions(missionData.missions);
       });
+      // #region agent log
+      AgentDebugLog.log(
+        location: 'game_main_screen.dart:_load',
+        message: '_load success',
+        hypothesisId: 'H1,H4',
+        data: {
+          'status': detail.status.name,
+          'hasTodayQuestion': question != null,
+          'participantCount': participants.length,
+        },
+      );
+      // #endregion
     } catch (e, s) {
       final message = ApiErrorTracker.logAndBuildMessage(
         method: 'GET',
@@ -219,8 +295,33 @@ class _GameMainScreenState extends State<GameMainScreen> {
       );
       if (!mounted) return;
       setState(() => _apiError = message);
+      // #region agent log
+      AgentDebugLog.log(
+        location: 'game_main_screen.dart:_load',
+        message: '_load failed',
+        hypothesisId: 'H1,H5,H6',
+        data: {
+          'error': message,
+          'exceptionType': e.runtimeType.toString(),
+        },
+      );
+      // #endregion
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        // #region agent log
+        AgentDebugLog.log(
+          location: 'game_main_screen.dart:_load',
+          message: '_load finally',
+          hypothesisId: 'H1,H5',
+          data: {
+            'loading': false,
+            'detailIsNull': _detail == null,
+            'apiError': _apiError,
+          },
+        );
+        // #endregion
+      }
     }
   }
 
@@ -255,11 +356,13 @@ class _GameMainScreenState extends State<GameMainScreen> {
       if (!mounted) return;
       setState(() {
         _participants = participants;
-        _missions = missionData.missions;
         _maxMissionCount = maxCount;
         _draftMissions = missionData.missions
-            .map((m) => EditableMission(id: m.id, content: m.content))
+            .map<EditableMission>(
+              (m) => EditableMission(id: m.id, content: m.content),
+            )
             .toList(growable: false);
+        _missionProvider.setMissions(missionData.missions);
       });
     } catch (e, s) {
       final message = ApiErrorTracker.logAndBuildMessage(
@@ -287,6 +390,40 @@ class _GameMainScreenState extends State<GameMainScreen> {
       if (!mounted) return;
       context.showSnackBar(message);
     }
+  }
+}
+
+class _InProgressFallback extends StatelessWidget {
+  const _InProgressFallback({
+    super.key,
+    required this.onRetry,
+  });
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '오늘의 질문을 불러오지 못했어요.',
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            CustomButton(
+              label: '다시 시도',
+              onPressed: onRetry,
+              width: 160,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

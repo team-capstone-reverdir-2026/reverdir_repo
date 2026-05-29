@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/json_parse.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_enums.dart';
 
@@ -17,11 +18,11 @@ class RoomSummaryData {
 
   factory RoomSummaryData.fromJson(Map<String, dynamic> json) {
     return RoomSummaryData(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      status:
-          RoomStatus.tryParse(json['status'] as String?) ?? RoomStatus.waiting,
-      participantCount: json['participantCount'] as int? ?? 0,
+      id: parseJsonString(json['id']),
+      name: parseJsonString(json['name']),
+      status: RoomStatus.tryParse(parseJsonString(json['status'])) ??
+          RoomStatus.waiting,
+      participantCount: parseJsonInt(json['participantCount']),
     );
   }
 }
@@ -43,11 +44,11 @@ class RoomJoinPreviewData {
 
   factory RoomJoinPreviewData.fromJson(Map<String, dynamic> json) {
     return RoomJoinPreviewData(
-      roomId: json['roomId'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-      missionCount: json['missionCount'] as int? ?? 0,
-      participantCount: json['participantCount'] as int? ?? 0,
+      roomId: parseJsonString(json['roomId']),
+      name: parseJsonString(json['name']),
+      description: parseJsonString(json['description']),
+      missionCount: parseJsonInt(json['missionCount']),
+      participantCount: parseJsonInt(json['participantCount']),
     );
   }
 }
@@ -60,8 +61,7 @@ class MainRepository {
 
   Future<List<RoomSummaryData>> fetchMyRooms() async {
     final res = await _api.get<Map<String, dynamic>>(ApiEndpoints.rooms);
-    final rooms = (res.data?['rooms'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>();
+    final rooms = parseJsonMapList(res.data?['rooms']);
     return rooms.map(RoomSummaryData.fromJson).toList();
   }
 
