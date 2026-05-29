@@ -5,12 +5,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/widgets/tomato_mascot.dart';
 import '../../../../core/widgets/washi_tape.dart';
 import '../../../hint/presentation/widgets/hint_card.dart';
 import '../../../hint/provider/hint_provider.dart';
 import '../../../mission/presentation/widgets/mission_card.dart';
 import '../../../mission/provider/mission_provider.dart';
+import 'participants_list_panel.dart';
+import 'room_name_with_mascot.dart';
 
 /// 진행 중 방 메인 레이아웃 (GameMainScreen 본문).
 class InProgressView extends StatelessWidget {
@@ -91,60 +92,37 @@ class InProgressView extends StatelessWidget {
       backgroundColor: AppColors.CIvory,
       isScrollControlled: true,
       builder: (ctx) {
-        return Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-          decoration: BoxDecoration(
-            color: AppColors.CIvory,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AppTheme.cornerRadius),
-              bottom: Radius.circular(AppTheme.cornerRadius),
+        return Material(
+          color: AppColors.CIvory,
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.CBrown.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  ParticipantsListPanel(
+                    title: '참여자',
+                    rotateAngle: 0,
+                    opaqueOverlay: true,
+                    children: participantNames
+                        .map((name) => ParticipantNameRow(name: name))
+                        .toList(),
+                  ),
+                ],
+              ),
             ),
-            border: AppTheme.handDrawnBorder(color: AppColors.CSkyBlue),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.CBrown.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Text('참여자', style: AppTextStyles.titleMedium),
-              const SizedBox(height: 12),
-              ...participantNames.map(
-                (name) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 14,
-                        backgroundColor: AppColors.CBlue.withValues(alpha: 0.5),
-                        child: Text(
-                          name.isNotEmpty ? name[0] : '?',
-                          style: AppTextStyles.label,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: AppTextStyles.bodyMedium,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
           ),
         );
       },
@@ -167,40 +145,34 @@ class _GameHeader extends StatelessWidget {
   final List<String> participantNames;
   final VoidCallback onParticipantsTap;
 
+  static const double _actionsGap = 12;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final compact = constraints.maxWidth < 360;
         final actions = _HeaderActions(
           status: status,
           dDayLabel: dDayLabel,
           participantNames: participantNames,
           onParticipantsTap: onParticipantsTap,
         );
+        final titleBlock = RoomNameWithMascot(
+          roomName: roomName,
+          mascotSize: compact ? 28 : 30,
+        );
 
-        if (constraints.maxWidth < 360) {
+        if (compact) {
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      roomName,
-                      style: AppTextStyles.titleLarge,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const TomatoMascot(
-                    variant: TomatoMascotVariant.excited,
-                    size: 28,
-                  ),
-                ],
-              ),
+              titleBlock,
               const SizedBox(height: 10),
-              actions,
+              Align(
+                alignment: Alignment.centerRight,
+                child: actions,
+              ),
             ],
           );
         }
@@ -208,32 +180,9 @@ class _GameHeader extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      roomName,
-                      style: AppTextStyles.titleLarge,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const TomatoMascot(
-                    variant: TomatoMascotVariant.excited,
-                    size: 30,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Align(
-                alignment: Alignment.topRight,
-                child: actions,
-              ),
-            ),
+            Expanded(child: titleBlock),
+            SizedBox(width: _actionsGap),
+            actions,
           ],
         );
       },
@@ -256,11 +205,10 @@ class _HeaderActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 190),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -302,7 +250,6 @@ class _HeaderActions extends StatelessWidget {
             ),
           ),
         ],
-      ),
     );
   }
 }
