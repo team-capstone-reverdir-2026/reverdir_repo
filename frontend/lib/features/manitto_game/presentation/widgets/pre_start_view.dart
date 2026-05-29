@@ -412,81 +412,106 @@ class _ParticipantsCard extends StatelessWidget {
       },
     );
     // #endregion
-    return Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppColors.CSkyBlue.withValues(alpha: 0.22),
-          borderRadius: AppTheme.borderRadius,
-          border: AppTheme.handDrawnBorder(color: AppColors.CSkyBlue),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('참여자 미션 준비 현황', style: AppTextStyles.titleMedium),
-            const SizedBox(height: 14),
-            ...participants.map(
-              (p) {
-                final entered = _missionCountFor(p);
-                // #region agent log
-                AgentDebugLog.log(
-                  location: 'pre_start_view.dart:_ParticipantsCard.row',
-                  message: 'participant row build',
-                  hypothesisId: 'H14,H20',
-                  data: {
-                    'displayNameEmpty': p.displayName.trim().isEmpty,
-                    'enteredType': entered.runtimeType.toString(),
-                  },
-                );
-                // #endregion
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor:
-                            p.isHost ? AppColors.CRed : AppColors.CBlue,
-                        child: Text(
-                          p.displayName.characters.first,
-                          style: AppTextStyles.label.copyWith(
-                            color: AppColors.CBackground,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          p.displayName,
-                          style: AppTextStyles.bodyLarge,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: entered >= maxMissionCount
-                              ? AppColors.CGreen.withValues(alpha: 0.48)
-                              : AppColors.CYellow.withValues(alpha: 0.60),
-                          borderRadius: BorderRadius.circular(999),
-                          border: AppTheme.handDrawnBorder(
-                            color: AppColors.CBrown,
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          '$entered/$maxMissionCount개',
-                          style: AppTextStyles.label,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+    return Transform.rotate(
+      angle: 0.014,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.CSkyBlue.withValues(alpha: 0.42),
+                  AppColors.CSkyBlue.withValues(alpha: 0.20),
+                  AppColors.CIvory,
+                ],
+              ),
+              borderRadius: AppTheme.borderRadius,
+              border: AppTheme.handDrawnBorder(color: AppColors.CSkyBlue),
             ),
-          ],
-        ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('참여자 미션 준비 현황', style: AppTextStyles.titleMedium),
+                const SizedBox(height: 14),
+                ...participants.map(
+                  (p) {
+                    final entered = _missionCountFor(p);
+                    // #region agent log
+                    AgentDebugLog.log(
+                      location: 'pre_start_view.dart:_ParticipantsCard.row',
+                      message: 'participant row build',
+                      hypothesisId: 'H14,H20',
+                      data: {
+                        'displayNameEmpty': p.displayName.trim().isEmpty,
+                        'enteredType': entered.runtimeType.toString(),
+                      },
+                    );
+                    // #endregion
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor:
+                                p.isHost ? AppColors.CRed : AppColors.CBlue,
+                            child: Text(
+                              p.displayName.characters.first,
+                              style: AppTextStyles.label.copyWith(
+                                color: AppColors.CBackground,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              p.displayName,
+                              style: AppTextStyles.bodyLarge,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: entered >= maxMissionCount
+                                  ? AppColors.CGreen.withValues(alpha: 0.48)
+                                  : AppColors.CYellow.withValues(alpha: 0.60),
+                              borderRadius: BorderRadius.circular(999),
+                              border: AppTheme.handDrawnBorder(
+                                color: AppColors.CBrown,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              '$entered/$maxMissionCount개',
+                              style: AppTextStyles.label,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: -10,
+            left: 24,
+            child: WashiTape.horizontal(
+              color: WashiTapeColor.blue,
+              width: 88,
+              rotation: -6,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

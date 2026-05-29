@@ -67,26 +67,10 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
         painter: _CorkBoardPainter(),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  final now = DateTime.now();
-                  final selected = await showDateRangePicker(
-                    context: context,
-                    firstDate: now.subtract(const Duration(days: 60)),
-                    lastDate: now.add(const Duration(days: 1)),
-                    initialDateRange: _range,
-                  );
-                  if (selected != null) setState(() => _range = selected);
-                },
-                icon: const Icon(Icons.calendar_month_outlined),
-                label: Text(
-                  _range == null
-                      ? '날짜별 필터'
-                      : '${DateFormatter.formatIso8601(_range!.start.toIso8601String())} ~ ${DateFormatter.formatIso8601(_range!.end.toIso8601String())}',
-                ),
-              ),
+            _DateRangeFilterBar(
+              range: _range,
+              onPickRange: _selectRange,
+              onClearRange: _clearRange,
             ),
             Expanded(
               child: _loading
@@ -123,15 +107,45 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
     List<LetterNoteData> notes,
     NoteDirection direction,
   ) {
-    final filtered = notes.where((note) {
-      if (note.direction != direction) return false;
-      final range = _range;
-      if (range == null) return true;
-      return !note.sentAt.isBefore(range.start) &&
-          !note.sentAt.isAfter(range.end);
-    }).toList()
+    final range = _range;
+    final rangeEnd = range == null
+        ? null
+        : DateTime(
+            range.end.year,
+            range.end.month,
+            range.end.day,
+            23,
+            59,
+            59,
+            999,
+          );
+
+    return notes
+        .where((note) {
+          if (note.direction != direction) return false;
+          if (range == null) return true;
+          return !note.sentAt.isBefore(range.start) &&
+              (rangeEnd == null || !note.sentAt.isAfter(rangeEnd));
+        })
+        .toList()
       ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
-    return filtered;
+  }
+
+  Future<void> _selectRange() async {
+    final now = DateTime.now();
+    final selected = await showDateRangePicker(
+      context: context,
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now.add(const Duration(days: 1)),
+      initialDateRange: _range,
+    );
+    if (selected == null || selected == _range) return;
+    setState(() => _range = selected);
+  }
+
+  void _clearRange() {
+    if (_range == null) return;
+    setState(() => _range = null);
   }
 
   void _showNoteDetail(LetterNoteData note) {
@@ -153,6 +167,8 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
       _error = null;
     });
     try {
+      // API 요청은 필터 미사용(쿼리 파라미터 없음) — 500 재현 당시와 동일.
+      // 날짜 필터는 [_filter]에서 클라이언트 적용.
       final sent = await _repo.fetchSent(widget.roomId);
       final received = await _repo.fetchReceived(widget.roomId);
       if (!mounted) return;
@@ -166,6 +182,96 @@ class _LetterBoardScreenState extends State<LetterBoardScreen>
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+}
+
+class _DateRangeFilterBar extends StatelessWidget {
+  const _DateRangeFilterBar({
+    required this.range,
+    required this.onPickRange,
+    required this.onClearRange,
+  });
+
+  final DateTimeRange? range;
+  final VoidCallback onPickRange;
+  final VoidCallback onClearRange;
+
+  @override
+  Widget build(BuildContext context) {
+    final rangeLabel = range == null
+        ? '기간 선택'
+        : '${DateFormatter.formatLocalDate(range!.start)} ~ '
+            '${DateFormatter.formatLocalDate(range!.end)}';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        decoration: BoxDecoration(
+          color: AppColors.CIvory.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(22),
+          border: AppTheme.handDrawnBorder(
+            color: AppColors.CBrown.withValues(alpha: 0.75),
+            width: AppTheme.borderWidthFocus,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.CTextPrimary.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '보고 싶은 기간을 설정해 주세요',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.CTextSecondary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onPickRange,
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: AppColors.CBackground,
+                      foregroundColor: AppColors.CTextPrimary,
+                      side: BorderSide(
+                        color: AppColors.CBrown.withValues(alpha: 0.45),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                    icon: const Icon(Icons.calendar_month_outlined, size: 20),
+                    label: Text(
+                      rangeLabel,
+                      style: AppTextStyles.label,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                if (range != null) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    onPressed: onClearRange,
+                    tooltip: '기간 초기화',
+                    icon: const Icon(Icons.close, size: 20),
+                    color: AppColors.CTextSecondary,
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
