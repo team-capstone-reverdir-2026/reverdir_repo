@@ -38,6 +38,7 @@ extension BuildContextX on BuildContext {
         backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         margin: _snackBarMargin,
+        duration: const Duration(seconds: 3),
         shape: AppTheme.roundedShape,
       ),
     );

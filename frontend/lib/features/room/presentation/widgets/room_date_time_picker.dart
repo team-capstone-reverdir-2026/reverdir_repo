@@ -301,6 +301,24 @@ class _TimeWheelPickerState extends State<_TimeWheelPicker> {
   }
 }
 
+/// 마우스 휠 등 큰 델타를 한 칸(itemExtent)으로 제한.
+class _SingleStepFixedExtentScrollPhysics extends FixedExtentScrollPhysics {
+  const _SingleStepFixedExtentScrollPhysics({required this.itemExtent});
+
+  final double itemExtent;
+
+  @override
+  _SingleStepFixedExtentScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _SingleStepFixedExtentScrollPhysics(itemExtent: itemExtent);
+  }
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
+    if (offset.abs() <= itemExtent) return offset;
+    return offset.sign * itemExtent;
+  }
+}
+
 class _LoopingWheelColumn extends StatefulWidget {
   const _LoopingWheelColumn({
     required this.label,
@@ -411,31 +429,33 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
                 child: SizedBox(
                   height: wheelHeight,
                   child: ListWheelScrollView.useDelegate(
-                    controller: _controller,
-                    itemExtent: _itemExtent,
-                    diameterRatio: 1.45,
-                    perspective: 0.003,
-                    physics: const FixedExtentScrollPhysics(),
-                    onSelectedItemChanged: _handleSelection,
-                    childDelegate: ListWheelChildBuilderDelegate(
-                      childCount: widget.loopCount * _loopRepeats,
-                      builder: (context, index) {
-                        final loopIndex = index % widget.loopCount;
-                        final selected = _controller.hasClients &&
-                            _controller.selectedItem == index;
-                        return Center(
-                          child: Text(
-                            widget.labelBuilder(loopIndex),
-                            style: _wheelTextStyle.copyWith(
-                              color: AppColors.CTextPrimary.withValues(
-                                alpha: selected ? 1 : 0.38,
+                      controller: _controller,
+                      itemExtent: _itemExtent,
+                      diameterRatio: 1.45,
+                      perspective: 0.003,
+                      physics: _SingleStepFixedExtentScrollPhysics(
+                        itemExtent: _itemExtent,
+                      ),
+                      onSelectedItemChanged: _handleSelection,
+                      childDelegate: ListWheelChildBuilderDelegate(
+                        childCount: widget.loopCount * _loopRepeats,
+                        builder: (context, index) {
+                          final loopIndex = index % widget.loopCount;
+                          final selected = _controller.hasClients &&
+                              _controller.selectedItem == index;
+                          return Center(
+                            child: Text(
+                              widget.labelBuilder(loopIndex),
+                              style: _wheelTextStyle.copyWith(
+                                color: AppColors.CTextPrimary.withValues(
+                                  alpha: selected ? 1 : 0.38,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
                 ),
               ),
             ],
