@@ -71,8 +71,15 @@ public class NoteService {
     @Transactional(readOnly = true)
     public NoteListResponse getSentNotes(Long userId, Long roomId, LocalDate from, LocalDate to) {
         Participant participant = getParticipant(userId, roomId);
-        LocalDateTime fromStart = toStartOfDay(from);
-        LocalDateTime toEnd = toEndOfDay(to);
+        Room room = participant.getRoom();
+
+        LocalDateTime fromStart = from != null
+                ? from.atStartOfDay()
+                : room.getStartedAt().toLocalDateTime();
+        LocalDateTime toEnd = to != null
+                ? to.atStartOfDay()
+                : LocalDateTime.now();
+
 
         List<NoteResponse> notes = noteRepository
                 .findSentNotes(roomId, participant.getId(), fromStart, toEnd)
@@ -86,8 +93,14 @@ public class NoteService {
     @Transactional(readOnly = true)
     public NoteListResponse getReceivedNotes(Long userId, Long roomId, LocalDate from, LocalDate to) {
         Participant participant = getParticipant(userId, roomId);
-        LocalDateTime fromStart = toStartOfDay(from);
-        LocalDateTime toEnd = toEndOfDay(to);
+        Room room = participant.getRoom();
+
+        LocalDateTime fromStart = from != null
+                ? from.atStartOfDay()
+                : room.getStartedAt().toLocalDateTime();
+        LocalDateTime toEnd = to != null
+                ? to.atStartOfDay()
+                : LocalDateTime.now();
 
         List<NoteResponse> notes = noteRepository
                 .findReceivedNotes(roomId, participant.getId(), fromStart, toEnd)
@@ -96,14 +109,6 @@ public class NoteService {
                 .toList();
 
         return new NoteListResponse(notes);
-    }
-
-    private LocalDateTime toStartOfDay(LocalDate date) {
-        return date != null ? date.atStartOfDay() : null;
-    }
-
-    private LocalDateTime toEndOfDay(LocalDate date) {
-        return date != null ? date.atTime(LocalTime.MAX) : null;
     }
 
     private Participant getParticipant(Long userId, Long roomId) {
