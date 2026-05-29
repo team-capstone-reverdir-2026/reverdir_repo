@@ -19,8 +19,8 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     @Query("""
             SELECT n FROM Note n
             WHERE n.room.id = :roomId AND n.sender.id = :participantId
-            AND (:fromStart IS NULL OR n.createdAt >= :fromStart)
-            AND (:toEnd IS NULL OR n.createdAt <= :toEnd)
+            AND (n.createdAt >= :fromStart)
+            AND (n.createdAt <= :toEnd)
             ORDER BY n.createdAt DESC
             """)
     List<Note> findSentNotes(
@@ -33,8 +33,8 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     @Query("""
             SELECT n FROM Note n
             WHERE n.room.id = :roomId AND n.receiver.id = :participantId
-            AND (:fromStart IS NULL OR n.createdAt >= :fromStart)
-            AND (:toEnd IS NULL OR n.createdAt <= :toEnd)
+            AND (n.createdAt >= :fromStart)
+            AND (n.createdAt <= :toEnd)
             ORDER BY n.createdAt DESC
             """)
     List<Note> findReceivedNotes(
