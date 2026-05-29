@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -301,24 +303,6 @@ class _TimeWheelPickerState extends State<_TimeWheelPicker> {
   }
 }
 
-/// 마우스 휠 등 큰 델타를 한 칸(itemExtent)으로 제한.
-class _SingleStepFixedExtentScrollPhysics extends FixedExtentScrollPhysics {
-  const _SingleStepFixedExtentScrollPhysics({required this.itemExtent});
-
-  final double itemExtent;
-
-  @override
-  _SingleStepFixedExtentScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return _SingleStepFixedExtentScrollPhysics(itemExtent: itemExtent);
-  }
-
-  @override
-  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
-    if (offset.abs() <= itemExtent) return offset;
-    return offset.sign * itemExtent;
-  }
-}
-
 class _LoopingWheelColumn extends StatefulWidget {
   const _LoopingWheelColumn({
     required this.label,
@@ -398,6 +382,23 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
     widget.onSelected(value);
   }
 
+  /// Web·데스크톱 휠은 ListWheel 기본 스크롤이 2칸 이상 점프할 수 있어 직접 1칸만 이동.
+  bool get _manualWheelStep =>
+      kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.linux;
+
+  void _onPointerScroll(PointerSignalEvent event) {
+    if (!_manualWheelStep || event is! PointerScrollEvent) return;
+    if (!_controller.hasClients) return;
+    final dy = event.scrollDelta.dy;
+    if (dy == 0) return;
+    final next = _controller.selectedItem + (dy > 0 ? 1 : -1);
+    _controller.jumpToItem(next);
+    _handleSelection(next);
+  }
+
   @override
   Widget build(BuildContext context) {
     final wheelHeight = _itemExtent * _visibleRows;
@@ -428,14 +429,16 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
               ClipRect(
                 child: SizedBox(
                   height: wheelHeight,
-                  child: ListWheelScrollView.useDelegate(
+                  child: Listener(
+                    onPointerSignal: _onPointerScroll,
+                    child: ListWheelScrollView.useDelegate(
                       controller: _controller,
                       itemExtent: _itemExtent,
                       diameterRatio: 1.45,
                       perspective: 0.003,
-                      physics: _SingleStepFixedExtentScrollPhysics(
-                        itemExtent: _itemExtent,
-                      ),
+                      physics: _manualWheelStep
+                          ? const NeverScrollableScrollPhysics()
+                          : const FixedExtentScrollPhysics(),
                       onSelectedItemChanged: _handleSelection,
                       childDelegate: ListWheelChildBuilderDelegate(
                         childCount: widget.loopCount * _loopRepeats,
@@ -456,6 +459,7 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
                         },
                       ),
                     ),
+                  ),
                 ),
               ),
             ],
