@@ -13,7 +13,204 @@
 
 <br>
 
-## 🚀 Overview
+## 📌 1. Project Overview
+
+### 🎯 프로젝트 목적
+- 기존 오프라인 마니또 게임의 불편함 해결 (수기 매칭, 누락, 익명성 보장 어려움)
+- 온라인 기반 자동 랜덤 매칭 시스템 제공
+- 게임 진행 (미션 → 인증 → 결과 공개) 전 과정 디지털화
+
+### 💡 핵심 문제 정의
+- 참가자 수 증가 시 수작업 매칭의 비효율성
+- 익명성 유지의 어려움
+- 미션 수행 관리 부재
+
+### 🧩 해결 전략
+- 서버 기반 자동 매칭 알고리즘
+- 익명 ID 기반 사용자 구조
+- 상태 기반 게임 플로우 설계 (JOIN → MATCH → PLAY → RESULT)
+
+---
+
+## 👥 2. Team & Roles
+
+| 이름 | 역할 |
+|------|------|
+| A | Frontend (UI/UX, React) |
+| B | Backend (API, DB 설계) |
+| C | Game Logic / Matching Algorithm |
+| D | DevOps / Deployment |
+
+---
+
+## 🏗 3. System Architecture
+
+### 📌 Architecture Overview
+
+Client (React)
+↓
+REST API Layer (Node.js / Express or Spring Boot)
+↓
+Service Layer (Game Logic / Matching Engine)
+↓
+Database (MySQL / PostgreSQL)
+
+
+### 📦 Component Separation
+
+**Frontend**
+- UI 상태 관리
+- API 요청 처리
+- 게임 진행 화면 렌더링
+
+**Backend**
+- 인증 (JWT)
+- 게임 세션 관리
+- 매칭 알고리즘 실행
+- 미션 생성 및 상태 업데이트
+
+**Database**
+- User / Game / Match / Mission 테이블 관리
+- 관계형 구조 기반 데이터 무결성 유지
+
+---
+
+## 🛠 4. Tech Stack
+
+### Frontend
+- Flutter
+- Dart
+
+### Backend
+- Spring Boot 4.0.6
+- Java 17
+- REST API
+- JWT Authentication
+
+### Database
+- Render PostgreSQL
+
+### Deployment
+- Vercel
+- Render
+
+---
+
+## 🚀 5. Key Features
+
+### 🎯 1. 익명 마니또 매칭 시스템
+- 참가자 기반 1:1 순환 매칭
+- 자기 자신 매칭 방지
+- 서버 단일 트랜잭션 처리
+
+### 💌 2. 미션 시스템
+- 하루 단위 자동 미션 생성
+- 사용자 수행 여부 체크
+- 게임 진행 상태 기반 미션 활성화
+
+### 🔔 3. 익명 메시지 / 힌트 시스템
+- Sender ID 익명화 처리
+- 힌트 기반 간접 커뮤니케이션
+
+### 📊 4. 결과 공개 시스템
+- 게임 종료 시 전체 매칭 결과 공개
+- 참여자 검증 가능 구조
+
+---
+
+## 🧠 Core Algorithm (Matching Engine)
+
+### 📌 문제 정의
+- N명의 참가자를 중복 없이 1:1 매칭
+- 자기 자신 매칭 금지
+- 완전한 순환 구조 유지
+
+---
+
+## 🔌 API Documentation
+
+### User API
+- POST /api/user/signup : 회원가입
+- POST /api/user/login : 로그인
+
+### Game API
+- POST /api/game/join : 게임 참여
+- POST /api/game/match : 매칭 실행
+
+### Mission API
+- GET /api/mission/today
+- POST /api/mission/complete
+
+---
+
+## ⚠️ Environment Variables
+
+프로젝트 실행을 위해 아래 환경 변수 설정이 필요합니다.
+
+```
+DB_URL=***
+DB_USER=***
+DB_PASSWORD=***
+JWT_SECRET=***
+GEMINI_API_KEY=***
+```
+
+---
+
+## ⚙️ How to Run
+
+```
+### 1️⃣ Clone Repository
+git clone https://github.com/team-capstone-reverdir-2026/reverdir_repo.git
+
+### 2️⃣ Frontend
+cd frontend
+flutter pub get
+flutter run -d chrome
+
+### 3️⃣ Backend
+cd backend
+./gradlew build
+./gradlew bootRun
+```
+
+---
+
+## 🚀 Deployment
+
+- Frontend: Vercel
+- Backend: Render
+- Database: Render PostgreSQL
+
+---
+
+## 🔐 Security Considerations
+
+- JWT 기반 인증으로 사용자 세션 관리
+- 비밀번호는 bcrypt를 이용해 단방향 해싱 처리
+- 민감 정보는 환경 변수로 (.env) 분리하여 관리
+
+---
+
+## 🚀 Future Improvements
+
+- AI 기반 방 맞춤 미션 추천
+- 실시간 채팅 시스템 (WebSocket)
+- 실시간 마니띠 랭킹 시스템
+- 현재 의심 중인 상대 설정
+- 개인화된 AI 결과 리포트 (방사형 그래프 도입 외)
+
+
+
+
+
+
+
+
+
+
+
+## 📌 Overview
 또마니또(To-Manito)는 오프라인에서 수작업으로 진행되던 전통적인 '마니또(Secret Santa)' 이벤트를 디지털화하고, AI 기반의 콘텐츠와 게임화(Gamification) 요소를 결합해 확장한 모바일 서비스입니다.
 
 단순한 익명 매칭과 결과 발표를 넘어, 그룹의 성격에 맞춘 AI 맞춤형 미션, 실시간 채팅, 활동량에 따른 실시간 랭킹 보드, 그리고 활동 종료 후 제공되는 **AI 마니또 캐릭터 리포트**를 통해 참여자들에게 지속적인 동기를 부여하고 새로운 상호작용 경험을 제공합니다.
