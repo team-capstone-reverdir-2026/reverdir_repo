@@ -1,7 +1,7 @@
 
 # 🍅 또마니또 (To-Manito)
 > 
-> 익명 매칭부터 실시간 소통, AI 기반 활동 분석까지 완벽한 마니또 경험을 제공하는 소셜 플랫폼
+> 익명 기반 상호작용으로 사람들 사이의 관계 형성과 친밀감 경험을 설계하는 소셜 게임 플랫폼
 <br>
 
 ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
@@ -15,20 +15,39 @@
 
 ## 📌 1. Project Overview
 
+> 사람들 사이에 자연스럽게 알아가고, 이어지고, 더 가까워질 계기를 만들어주는 익명 기반 관계 경험 플랫폼입니다.
+> 사용자 간 자연스러운 관계 형성과 지속적인 상호작용을 목표로 합니다.
+
 ### 🎯 프로젝트 목적
-- 기존 오프라인 마니또 게임의 불편함 해결 (수기 매칭, 누락, 익명성 보장 어려움)
-- 온라인 기반 자동 랜덤 매칭 시스템 제공
-- 게임 진행 (미션 → 인증 → 결과 공개) 전 과정 디지털화
+사람들은 새로운 관계를 맺고 싶어하지만,
+그 관계를 자연스럽게 시작하고 이어갈 수 있는 구조는 많지 않습니다.
+
+특히 기존 마니또나 친목 기반 서비스는
+처음에는 흥미를 느끼지만 시간이 지나면서 참여 동기가 약해지고,
+결국 관계 형성 경험이 충분히 이어지지 못하는 문제가 있습니다.
+
+이 프로젝트는 관계가 자연스럽게 시작되고, 이어지고, 깊어지는 경험을 만드는 것을 목표로 합니다.
 
 ### 💡 핵심 문제 정의
-- 참가자 수 증가 시 수작업 매칭의 비효율성
-- 익명성 유지의 어려움
-- 미션 수행 관리 부재
+기존 마니또/친목 기반 서비스는 다음과 같은 한계를 가집니다.
+
+- 이벤트성으로 끝나 지속적인 관계 경험으로 이어지지 않음
+- 참여를 유지할 수 있는 동기 구조 부족
+- 사람 간 자연스러운 대화를 유도하는 장치 부족
+- 시간이 지나면서 자연스럽게 참여와 관심이 감소
+
+결과적으로 처음에는 재미있지만, 점점 흐지부지되는 구조가 반복되기 쉽습니다.
 
 ### 🧩 해결 전략
-- 서버 기반 자동 매칭 알고리즘
-- 익명 ID 기반 사용자 구조
-- 상태 기반 게임 플로우 설계 (JOIN → MATCH → PLAY → RESULT)
+이 문제를 해결하기 위해,
+단발성 게임이 아니라 사용자 간 관계가 자연스럽게 쌓이고 유지되는 구조를 설계했습니다.
+
+이를 위해 다음과 같은 기능들을 제공합니다.
+
+- 익명 마니또 매칭 → 부담 없이 새로운 관계를 시작할 수 있는 구조
+- 1일 1질문 시스템 → 서로의 생각과 취향을 자연스럽게 알아가는 지속적인 접점
+- 익명 쪽지 기능 → 직접적 부담 없이 관심과 감정을 가볍게 전달할 수 있는 상호작용
+- AI 행동 분석 리포트 → 게임 내 상호작용을 기반으로 관계 경험을 되돌아볼 수 있는 피드백 제공
 
 ---
 
@@ -36,10 +55,9 @@
 
 | 이름 | 역할 |
 |------|------|
-| A | Frontend (UI/UX, React) |
-| B | Backend (API, DB 설계) |
-| C | Game Logic / Matching Algorithm |
-| D | DevOps / Deployment |
+| 이은효 | Frontend |
+| Lyu Dongying | Frontend |
+| 전채연 | Backend |
 
 ---
 
@@ -47,21 +65,39 @@
 
 ### 📌 Architecture Overview
 
-Client (React)
+```
+Client (Flutter)
 ↓
-REST API Layer (Node.js / Express or Spring Boot)
+REST API Layer (Spring Boot)
 ↓
-Service Layer (Game Logic / Matching Engine)
+Service Layer (Game Logic / Matching Engine) → Gemini 3.1 Flash
 ↓
-Database (MySQL / PostgreSQL)
+Database (Render PostgreSQL)
+```
 
+이 프로젝트는 다음 흐름으로 구성됩니다.
+```
+Room 생성
+  ↓
+Participant 참여
+  ↓
+Game Start
+  ↓
+마니또 매칭 생성
+  ↓
+Question / Mission / Note 상호작용
+  ↓
+Game End
+  ↓
+Result (AI 분석 리포트)
+```
 
 ### 📦 Component Separation
 
 **Frontend**
 - UI 상태 관리
 - API 요청 처리
-- 게임 진행 화면 렌더링
+- 게임 화면 렌더링
 
 **Backend**
 - 인증 (JWT)
@@ -70,7 +106,7 @@ Database (MySQL / PostgreSQL)
 - 미션 생성 및 상태 업데이트
 
 **Database**
-- User / Game / Match / Mission 테이블 관리
+- 테이블 관리
 - 관계형 구조 기반 데이터 무결성 유지
 
 ---
@@ -78,8 +114,8 @@ Database (MySQL / PostgreSQL)
 ## 🛠 4. Tech Stack
 
 ### Frontend
-- Flutter
-- Dart
+- Flutter 3.41.5
+- Dart 3.11.3
 
 ### Backend
 - Spring Boot 4.0.6
@@ -102,44 +138,98 @@ Database (MySQL / PostgreSQL)
 - 참가자 기반 1:1 순환 매칭
 - 자기 자신 매칭 방지
 - 서버 단일 트랜잭션 처리
+- 게임 시작 시 자동 매칭 생성
 
-### 💌 2. 미션 시스템
-- 하루 단위 자동 미션 생성
-- 사용자 수행 여부 체크
-- 게임 진행 상태 기반 미션 활성화
+### 🎲 2. 미션 시스템
+- 사용자 정의 미션 생성/수정/삭제
+- 랜덤 미션 추천 기능 제공
+- 개인별 미션 관리
 
-### 🔔 3. 익명 메시지 / 힌트 시스템
-- Sender ID 익명화 처리
-- 힌트 기반 간접 커뮤니케이션
+### 💌 3. 익명 쪽지 시스템
+- 정체를 숨긴 상태로 메시지 전송
+- 보낸 쪽지함 / 받은 쪽지함 제공
+- 읽음 여부 관리
+- 게임 종료 전까지 발신자 정보 비공개
 
-### 📊 4. 결과 공개 시스템
+### 🔔 3. 오늘의 질문(힌트) 시스템
+- 방 단위로 하루 1개의 질문 자동 제공
+- DB에 저장된 질문 풀에서 랜덤 추출
+- 같은 방의 모든 참여자에게 동일한 질문 제공
+- 방마다 서로 다른 질문 세트 운영
+- 답변 히스토리를 통한 간접 힌트 제공
+
+### 🤝 4. 참여자 관리 시스템
+- 방 입장 시 참여자 등록
+- 참여자 목록 조회
+- 방 단위 멤버 관리
+- 게임 참여 상태 추적
+
+### 📊 5. 결과 공개 시스템
 - 게임 종료 시 전체 매칭 결과 공개
-- 참여자 검증 가능 구조
+- 마니또/마니띠 관계 확인
+
+### 🤖 6. Gemini 기반 행동 분석 리포트
+- Gemini 3.1 Flash 기반 개인별 결과 리포트 생성
+- 게임 중 생성된 활동 로그 수집 및 분석
+- 쪽지 전송 횟수, 평균 메시지 길이, 주요 활동 시간대 등을 기반으로 사용자 참여 패턴 도출
+- 개인별 참여 패턴 리포트 생성
+- 향후 질문 응답, 미션 수행 내역 등 추가 데이터 기반 분석 확장 예정
 
 ---
 
-## 🧠 Core Algorithm (Matching Engine)
+### 📡 External Services
+- Gemini 3.1 Flash  
+  → 게임 내 행동 데이터를 기반으로 AI 결과 리포트 생성
 
-### 📌 문제 정의
-- N명의 참가자를 중복 없이 1:1 매칭
-- 자기 자신 매칭 금지
-- 완전한 순환 구조 유지
+- Kakao API (planned)  
+  → 참여 링크 공유 및 결과 리포트 공유 기능 확장 예정
+
+- Firebase Cloud Messaging (planned)  
+  → 게임 진행 및 상호작용 알림 기능 확장 예정
 
 ---
 
-## 🔌 API Documentation
+### 📂 Structure
 
-### User API
-- POST /api/user/signup : 회원가입
-- POST /api/user/login : 로그인
+```
+reverdir/
 
-### Game API
-- POST /api/game/join : 게임 참여
-- POST /api/game/match : 매칭 실행
-
-### Mission API
-- GET /api/mission/today
-- POST /api/mission/complete
+├── frontend/
+│   ├── src/
+│   │   ├── core/              # 네트워크 / 라우터 / 상태관리 / 테마
+│   │   ├── features/          # 도메인 기능 모듈
+│   │   │   ├── auth           # 로그인 / 회원가입
+│   │   │   ├── room           # 방 생성 / 참여
+│   │   │   ├── game           # 게임 진행 (start / flow / end)
+│   │   │   ├── mission        # 미션 시스템
+│   │   │   ├── question       # 오늘의 질문 / 답변
+│   │   │   ├── note           # 익명 쪽지
+│   │   │   └── report         # AI 결과 리포트
+│   │   ├── shared/            # 공통 컴포넌트 (Button, Modal 등)
+│   │   ├── pages/             # 라우트 페이지
+│   │   ├── assets/            # 이미지 / 아이콘
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│
+├── backend/
+│   ├── src/
+│   │   ├── auth/              # JWT 인증 / 로그인
+│   │   ├── user/              # 사용자 관리
+│   │   ├── room/              # 방 / 참여자 관리
+│   │   ├── game/              # 마니또 매칭 / 게임 lifecycle
+│   │   ├── mission/           # 미션 CRUD / 랜덤 미션
+│   │   ├── question/          # 오늘의 질문 시스템
+│   │   ├── note/              # 익명 쪽지 시스템
+│   │   ├── result/            # Gemini 기반 AI 리포트
+│   │   └── global/            # 공통 응답 / 예외 / 설정
+│   │
+│   ├── Dockerfile
+│   ├── build.gradle
+│   └── application.yml
+│
+├── docs/                      # API 명세 / 설계 문서
+└── README.md
+```
 
 ---
 
@@ -198,57 +288,9 @@ cd backend
 - 실시간 채팅 시스템 (WebSocket)
 - 실시간 마니띠 랭킹 시스템
 - 현재 의심 중인 상대 설정
-- 개인화된 AI 결과 리포트 (방사형 그래프 도입 외)
+- 더욱 개인화된 AI 결과 리포트 (방사형 그래프 도입 외)
 
-
-
-
-
-
-
-
-
-
-
-## 📌 Overview
-또마니또(To-Manito)는 오프라인에서 수작업으로 진행되던 전통적인 '마니또(Secret Santa)' 이벤트를 디지털화하고, AI 기반의 콘텐츠와 게임화(Gamification) 요소를 결합해 확장한 모바일 서비스입니다.
-
-단순한 익명 매칭과 결과 발표를 넘어, 그룹의 성격에 맞춘 AI 맞춤형 미션, 실시간 채팅, 활동량에 따른 실시간 랭킹 보드, 그리고 활동 종료 후 제공되는 **AI 마니또 캐릭터 리포트**를 통해 참여자들에게 지속적인 동기를 부여하고 새로운 상호작용 경험을 제공합니다.
-
-<br>
-
-## 🎯 Target & Problem Definition
-
-### Target Audience
-* **사내 소규모 조직 및 팀:** 어색한 분위기를 깨고 자연스러운 유대감을 형성하고자 하는 직장인 그룹
-* **대학교 학과/동아리:** 다수의 인원이 참여하여 단합과 재미를 추구하는 대학생 커뮤니티
-* **온라인 커뮤니티 (게임 길드 등):** 오프라인 만남이나 개인정보 노출 없이 익명 이벤트를 즐기고 싶은 비대면 그룹
-
-### Pain Points
-* **진행의 비효율성:** 종이 뽑기, 수동 관리 등 오프라인 방식의 한계와 빈번한 정체 탄로
-* **빠른 흥미 이탈:** 매칭 이후 '무엇을 해야 할지' 몰라 발생하는 소통 부재와 낮은 참여율
-* **단방향적 관계:** 마니또-마니띠의 1:1 관계에만 치중되어 그룹 전체의 상호작용 부족
-* **휘발되는 경험:** 활동 내역이 기록되지 않아 이벤트 종료 시점의 만족도 하락
-
-<br>
-
-## ✨ Key Features
-
-* **🎲 방 생성 및 익명 자동 매칭**
-  * 초대 코드 기반의 독립적인 룸(Room) 생성
-  * 서버 사이드 무작위 익명 매칭
-* **🖥 AI 맞춤형 환경 구성 (Contextual Generator)**
-  * 방 생성 시 입력된 메타데이터(모임 성격)를 AI가 분석
-  * 해당 그룹 특성에 최적화된 추천 미션 템플릿 자동 생성
-* **📋 게임화된 상호작용 (Gamified Interaction)**
-  * 단방향/역방향 익명 비밀 쪽지 및 선물 기록 시스템
-  * 힌트 열람 및 실시간 마니또로 의심되는 상대 설정 기능
-  * 미션 달성도, 쪽지, 선물 등 활동량 기반의 실시간 랭킹 보드
-* **🤖 AI 기반 활동 리포트 (Persona Analysis)**
-  * 마니또 종료 시, 유저의 활동 데이터를 AI가 종합 분석
-  * 개인별 '마니또 캐릭터 유형' 명명 및 방사형 그래프가 포함된 결과 리포트 발급
-
-<br>
+---
 
 ## 📚 Documentation
 
@@ -256,32 +298,5 @@ cd backend
 * 📌 [Team Notion](https://www.notion.so/2026-capstone-fd7d4a4683e182fd9cea81cca11a4b88)
 * 📌 [Project Plan](https://www.notion.so/2026-capstone-fd7d4a4683e182fd9cea81cca11a4b88)
 
-<br>
+---
 
-## 🛠 Tech Stack
-
-### Backend
-* Java 17
-* Spring Boot 4.0.6
-
-### Database
-* MySQL 8.0
-
-### Frontend
-* Flutter 3.41.5
-* Dart 3.11.3
-
-### External Services
-* OpenAI API
-* kakao Link API
-* Firebase Cloud Messaging (FCM)
-
-<br>
-
-## Project Structure
-
-<br>
-
-## How to Run
-
-<br>
