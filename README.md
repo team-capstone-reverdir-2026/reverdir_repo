@@ -19,6 +19,8 @@
 > 사람들 사이에 자연스럽게 알아가고, 이어지고, 더 가까워질 계기를 만들어주는 익명 기반 관계 경험 플랫폼입니다.
 > 사용자 간 자연스러운 관계 형성과 지속적인 상호작용을 목표로 합니다.
 
+<br>
+
 ### 🎯 프로젝트 목적
 사람들은 새로운 관계를 맺고 싶어하지만,
 그 관계를 자연스럽게 시작하고 이어갈 수 있는 구조는 많지 않습니다.
@@ -50,6 +52,8 @@
 - 익명 쪽지 기능 → 직접적 부담 없이 관심과 감정을 가볍게 전달할 수 있는 상호작용
 - AI 행동 분석 리포트 → 게임 내 상호작용을 기반으로 관계 경험을 되돌아볼 수 있는 피드백 제공
 
+<br>
+
 ---
 
 ## 👥 2. Team & Roles
@@ -60,6 +64,8 @@
 | Lyu Dongying | Frontend |
 | 전채연 | Backend |
 
+<br>
+ 
 ---
 
 ## 🏗 3. System Architecture
@@ -74,23 +80,6 @@ REST API Layer (Spring Boot)
 Service Layer (Game Logic / Matching Engine) → Gemini 3.1 Flash
 ↓
 Database (Render PostgreSQL)
-```
-
-이 프로젝트는 다음 흐름으로 구성됩니다.
-```
-Room 생성
-  ↓
-Participant 참여
-  ↓
-Game Start
-  ↓
-마니또 매칭 생성
-  ↓
-Question / Mission / Note 상호작용
-  ↓
-Game End
-  ↓
-Result (AI 분석 리포트)
 ```
 
 ### 📦 Component Separation
@@ -109,10 +98,38 @@ Result (AI 분석 리포트)
 **Database**
 - 테이블 관리
 - 관계형 구조 기반 데이터 무결성 유지
-
+ 
+<br>
+ 
 ---
 
-## 🛠 4. Tech Stack
+## 🔄 4. Service Flow
+이 프로젝트는 다음 흐름으로 구성됩니다.
+```
+사용자 로그인
+    ↓
+방 생성
+    ↓
+참여자 입장
+    ↓
+게임 시작
+    ↓
+마니또 자동 매칭
+    ↓
+질문 / 미션 / 쪽지 수행
+    ↓
+게임 종료
+    ↓
+결과 공개
+    ↓
+AI 리포트 생성
+```
+ 
+<br>
+ 
+---
+
+## 🛠 5. Tech Stack
 
 ### Frontend
 - Flutter 3.41.5
@@ -130,10 +147,25 @@ Result (AI 분석 리포트)
 ### Deployment
 - Vercel
 - Render
+ 
+<br>
+ 
+---
+## 📡 6. External Services & APIs
+- 🤖 Gemini 3.1 Flash  
+  → 게임 내 행동 데이터를 기반으로 AI 결과 리포트 생성
 
+- 💬 Kakao API (planned)  
+  → 참여 링크 공유 및 결과 리포트 공유 기능 확장 예정
+
+- 🔔 Firebase Cloud Messaging (planned)  
+  → 게임 진행 및 상호작용 알림 기능 확장 예정
+ 
+<br>
+ 
 ---
 
-## 🚀 5. Key Features
+## 🚀 7. Key Features
 
 ### 🎯 1. 익명 마니또 매칭 시스템
 - 참가자 기반 1:1 순환 매칭
@@ -175,22 +207,53 @@ Result (AI 분석 리포트)
 - 쪽지 전송 횟수, 평균 메시지 길이, 주요 활동 시간대 등을 기반으로 사용자 참여 패턴 도출
 - 개인별 참여 패턴 리포트 생성
 - 향후 질문 응답, 미션 수행 내역 등 추가 데이터 기반 분석 확장 예정
-
+ 
+<br>
+ 
 ---
 
-### 📡 External Services
-- Gemini 3.1 Flash  
-  → 게임 내 행동 데이터를 기반으로 AI 결과 리포트 생성
+## 🖼 8. Screenshots
 
-- Kakao API (planned)  
-  → 참여 링크 공유 및 결과 리포트 공유 기능 확장 예정
+### 🍅 또마니또 서비스 전체 흐름
 
-- Firebase Cloud Messaging (planned)  
-  → 게임 진행 및 상호작용 알림 기능 확장 예정
+아래 이미지는 또마니또의 핵심 사용자 경험 흐름을 하나의 화면으로 정리한 것입니다.
 
+익명 마니또 매칭 → 오늘의 질문(힌트) → 익명 쪽지 상호작용 → AI 기반 행동 분석 리포트까지 이어지는
+전체 서비스 흐름을 한눈에 보여줍니다.
+
+<img width="1607" height="796" alt="데모 주요 화면 스크린샷" src="https://github.com/user-attachments/assets/f4739e7d-6c60-43d6-8641-d53749b1bc67" />
+
+  
+<br>  
+<br>
+ 
 ---
 
-### 📂 Structure
+## 9. Database Design
+
+### Entity Relationship Diagram (ERD)
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/e16b20e4-b6cd-473e-aee6-f96bc3ce0e9c" />
+
+
+### Core Entities
+```
+- User: 사용자 정보
+- Room: 게임이 진행되는 공간
+- Participant: Room 내 사용자 참여 정보
+- QuestionTemplate: 질문 템플릿 저장
+- Question: 특정 게임에서 실제 출제된 질문
+- Answer: 특정 게임에서 실제 출제된 질문에 대한 사용자별 답 
+- MissionTemplate: 미션 템플릿 저장
+- Mission: 특정 참가자에게 할당된 미션
+- Note: 익명 쪽지
+- ParticipantReport: Gemini 분석 결과
+```
+ 
+<br>
+ 
+---
+
+### 📂 10. Project Structure
 
 ```
 reverdir/
@@ -231,10 +294,12 @@ reverdir/
 ├── docs/                      # API 명세 / 설계 문서
 └── README.md
 ```
-
+ 
+<br>
+ 
 ---
 
-## ⚠️ Environment Variables
+## ⚠️ 11. Environment Variables
 
 프로젝트 실행을 위해 아래 환경 변수 설정이 필요합니다.
 
@@ -245,10 +310,12 @@ DB_PASSWORD=***
 JWT_SECRET=***
 GEMINI_API_KEY=***
 ```
-
+ 
+<br>
+ 
 ---
 
-## ⚙️ How to Run
+## ⚙️ 12. How to Run
 
 ```
 ### 1️⃣ Clone Repository
@@ -264,36 +331,44 @@ cd backend
 ./gradlew build
 ./gradlew bootRun
 ```
-
+ 
+<br>
+ 
 ---
 
-## 🚀 Deployment
+## 🚀 13. Deployment
 
 - Frontend: Vercel
 - Backend: Render
 - Database: Render PostgreSQL
-
+ 
+<br>
+ 
 ---
 
-## 🔐 Security Considerations
+## 🔐 14. Security Considerations
 
 - JWT 기반 인증으로 사용자 세션 관리
 - 비밀번호는 bcrypt를 이용해 단방향 해싱 처리
 - 민감 정보는 환경 변수로 (.env) 분리하여 관리
-
+ 
+<br>
+ 
 ---
 
-## 🚀 Future Improvements
+## 🚀 15. Future Improvements
 
 - AI 기반 방 맞춤 미션 추천
 - 실시간 채팅 시스템 (WebSocket)
 - 실시간 마니띠 랭킹 시스템
 - 현재 의심 중인 상대 설정
 - 더욱 개인화된 AI 결과 리포트 (방사형 그래프 도입 외)
-
+ 
+<br>
+ 
 ---
 
-## 📚 Documentation
+## 📚 16. Documentation
 
 * 📌 [Team Ground Rule](https://github.com/team-capstone-reverdir-2026/reverdir_repo/blob/main/Team_Ground_Rule.md)
 * 📌 [Team Notion](https://www.notion.so/2026-capstone-fd7d4a4683e182fd9cea81cca11a4b88)
