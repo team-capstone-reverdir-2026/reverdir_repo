@@ -4,6 +4,7 @@
 > 익명 기반 상호작용으로 사람들 사이의 관계 형성과 친밀감 경험을 설계하는 소셜 게임 플랫폼
 <br>
 
+
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
@@ -11,6 +12,11 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=jsonwebtokens)
 ![Gemini API](https://img.shields.io/badge/Gemini_API-412991?style=for-the-badge&logo=google&logoColor=white)
+
+<br>
+
+🚀 **서비스 체험하기**  
+👉 https://tomanito.vercel.app/
 
 <br>
 
@@ -184,24 +190,24 @@ AI 리포트 생성
 - 읽음 여부 관리
 - 게임 종료 전까지 발신자 정보 비공개
 
-### 🔔 3. 오늘의 질문(힌트) 시스템
+### 🔔 4. 오늘의 질문(힌트) 시스템
 - 방 단위로 하루 1개의 질문 자동 제공
 - DB에 저장된 질문 풀에서 랜덤 추출
 - 같은 방의 모든 참여자에게 동일한 질문 제공
 - 방마다 서로 다른 질문 세트 운영
 - 답변 히스토리를 통한 간접 힌트 제공
 
-### 🤝 4. 참여자 관리 시스템
+### 🤝 5. 참여자 관리 시스템
 - 방 입장 시 참여자 등록
 - 참여자 목록 조회
 - 방 단위 멤버 관리
 - 게임 참여 상태 추적
 
-### 📊 5. 결과 공개 시스템
+### 📊 6. 결과 공개 시스템
 - 게임 종료 시 전체 매칭 결과 공개
 - 마니또/마니띠 관계 확인
 
-### 🤖 6. Gemini 기반 행동 분석 리포트
+### 🤖 7. Gemini 기반 행동 분석 리포트
 - Gemini 3.1 Flash 기반 개인별 결과 리포트 생성
 - 게임 중 생성된 활동 로그 수집 및 분석
 - 쪽지 전송 횟수, 평균 메시지 길이, 주요 활동 시간대 등을 기반으로 사용자 참여 패턴 도출
@@ -259,39 +265,27 @@ AI 리포트 생성
 reverdir/
 
 ├── frontend/
-│   ├── src/
-│   │   ├── core/              # 네트워크 / 라우터 / 상태관리 / 테마
-│   │   ├── features/          # 도메인 기능 모듈
-│   │   │   ├── auth           # 로그인 / 회원가입
-│   │   │   ├── room           # 방 생성 / 참여
-│   │   │   ├── game           # 게임 진행 (start / flow / end)
-│   │   │   ├── mission        # 미션 시스템
-│   │   │   ├── question       # 오늘의 질문 / 답변
-│   │   │   ├── note           # 익명 쪽지
-│   │   │   └── report         # AI 결과 리포트
-│   │   ├── shared/            # 공통 컴포넌트 (Button, Modal 등)
-│   │   ├── pages/             # 라우트 페이지
-│   │   ├── assets/            # 이미지 / 아이콘
-│   │   ├── App.tsx
-│   │   └── main.tsx
+│   ├── auth/              # 로그인 / 회원가입
+│   ├── room/              # 방 생성 / 참여
+│   ├── game/              # 게임 진행
+│   ├── mission/           # 미션 시스템
+│   ├── hint/              # 힌트 시스템
+│   ├── note/              # 익명 쪽지
+│   ├── result/            # AI 결과 리포트
+│   └── common/            # 공통 위젯 / 상태관리 / 유틸
 │
 ├── backend/
-│   ├── src/
-│   │   ├── auth/              # JWT 인증 / 로그인
-│   │   ├── user/              # 사용자 관리
-│   │   ├── room/              # 방 / 참여자 관리
-│   │   ├── game/              # 마니또 매칭 / 게임 lifecycle
-│   │   ├── mission/           # 미션 CRUD / 랜덤 미션
-│   │   ├── question/          # 오늘의 질문 시스템
-│   │   ├── note/              # 익명 쪽지 시스템
-│   │   ├── result/            # Gemini 기반 AI 리포트
-│   │   └── global/            # 공통 응답 / 예외 / 설정
-│   │
-│   ├── Dockerfile
-│   ├── build.gradle
-│   └── application.yml
+│   ├── auth/              # JWT 인증 / 로그인
+│   ├── user/              # 사용자 관리
+│   ├── room/              # 방 / 참여자 관리
+│   ├── game/              # 마니또 매칭 / 게임 lifecycle
+│   ├── mission/           # 미션 CRUD / 랜덤 미션
+│   ├── question/          # 오늘의 질문 시스템
+│   ├── note/              # 익명 쪽지 시스템
+│   ├── result/            # Gemini 기반 AI 리포트
+│   └── global/            # 공통 응답 / 예외 / 설정
 │
-├── docs/                      # API 명세 / 설계 문서
+├── docs/                  # API 명세 / 설계 문서
 └── README.md
 ```
  
