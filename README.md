@@ -274,13 +274,14 @@ reverdir/
 
 ├── frontend/
 │   ├── auth/              # 로그인 / 회원가입
+│   ├── main/              # 홈 화면
 │   ├── room/              # 방 생성 / 참여
-│   ├── game/              # 게임 진행
+│   ├── manitto_game/      # 게임 진행
 │   ├── mission/           # 미션 시스템
 │   ├── hint/              # 힌트 시스템
-│   ├── note/              # 익명 쪽지
-│   ├── result/            # AI 결과 리포트
-│   └── common/            # 공통 위젯 / 상태관리 / 유틸
+│   ├── letter/            # 익명 쪽지
+│   ├── game_result/       # AI 결과 리포트
+│   └── core/              # 공통 위젯 / 상태관리 / 유틸
 │
 ├── backend/
 │   ├── auth/              # JWT 인증 / 로그인
