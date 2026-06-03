@@ -148,6 +148,7 @@ flutter run -d chrome
 ## 🌐 배포 버전으로 바로 체험하기
  
 로컬 환경 설정 없이 바로 체험하려면 아래 링크를 이용하세요.
+Issue 등록 시 재현 방법과 예상 동작을 함께 작성해 주시면 문제 해결에 도움이 됩니다.
  
 👉 [https://tomanito.vercel.app/](https://tomanito.vercel.app/)
  
