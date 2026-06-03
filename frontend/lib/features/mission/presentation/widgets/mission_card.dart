@@ -57,7 +57,7 @@ class MissionListCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '오늘의 미션',
+                        '당신의 미션',
                         style: AppTextStyles.titleMedium.copyWith(
                           color: AppColors.CTextPrimary,
                         ),

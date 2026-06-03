@@ -382,16 +382,23 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
     widget.onSelected(value);
   }
 
-  /// Web·데스크톱 휠은 ListWheel 기본 스크롤이 2칸 이상 점프할 수 있어 직접 1칸만 이동.
-  bool get _manualWheelStep =>
-      kIsWeb ||
-      defaultTargetPlatform == TargetPlatform.windows ||
-      defaultTargetPlatform == TargetPlatform.macOS ||
-      defaultTargetPlatform == TargetPlatform.linux;
+  /// 데스크톱(네이티브·넓은 웹)만 휠 1칸 점프 보정. 모바일 웹은 터치 스크롤 유지.
+  bool _manualWheelStep(BuildContext context) {
+    if (defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux) {
+      return true;
+    }
+    if (kIsWeb) {
+      return MediaQuery.sizeOf(context).shortestSide >= 600;
+    }
+    return false;
+  }
 
   void _onPointerScroll(PointerSignalEvent event) {
-    if (!_manualWheelStep || event is! PointerScrollEvent) return;
+    if (event is! PointerScrollEvent) return;
     if (!_controller.hasClients) return;
+    // Listener는 데스크톱 웹·PC에서만 연결됨.
     final dy = event.scrollDelta.dy;
     if (dy == 0) return;
     final next = _controller.selectedItem + (dy > 0 ? 1 : -1);
@@ -402,6 +409,7 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
   @override
   Widget build(BuildContext context) {
     final wheelHeight = _itemExtent * _visibleRows;
+    final manualWheel = _manualWheelStep(context);
 
     return Column(
       children: [
@@ -430,13 +438,14 @@ class _LoopingWheelColumnState extends State<_LoopingWheelColumn> {
                 child: SizedBox(
                   height: wheelHeight,
                   child: Listener(
-                    onPointerSignal: _onPointerScroll,
+                    onPointerSignal:
+                        manualWheel ? _onPointerScroll : null,
                     child: ListWheelScrollView.useDelegate(
                       controller: _controller,
                       itemExtent: _itemExtent,
                       diameterRatio: 1.45,
                       perspective: 0.003,
-                      physics: _manualWheelStep
+                      physics: manualWheel
                           ? const NeverScrollableScrollPhysics()
                           : const FixedExtentScrollPhysics(),
                       onSelectedItemChanged: _handleSelection,
