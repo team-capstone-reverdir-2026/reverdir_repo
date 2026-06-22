@@ -16,7 +16,7 @@
 <br>
 
 🚀 **서비스 체험하기**  
-👉 https://tomanito.vercel.app/
+👉 MVP 데모: https://tomanito.vercel.app/
 
 <br>
 
