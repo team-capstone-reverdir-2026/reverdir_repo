@@ -17,6 +17,8 @@
 
 🚀 **서비스 체험하기**  
 👉 MVP 데모: https://tomanito.vercel.app/
+👉 MVP 데모 시나리오: https://github.com/team-capstone-reverdir-2026/reverdir_repo/blob/main/self_demo.md
+👉 MVP 데모 바로 보기: https://youtube.com/watch?v=L6pEMqf94Cs&si=iuQwZlgOIs20Lzud
 
 <br>
 
